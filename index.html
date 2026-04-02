@@ -210,7 +210,7 @@
             CREATED BY 林小木
         </div>
         <div style="position: absolute; bottom: env(safe-area-inset-bottom, 20px); font-size: 12px; color: #475569; letter-spacing: 2px;">
-            VER 1.4.0 | HORDE AWAKENING
+            VER 1.5.0 | HORDE AWAKENING
         </div>
     </div>
 
@@ -344,15 +344,14 @@
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize); resize();
 
-        let saveData = JSON.parse(localStorage.getItem('spaceSurvivorsSave_v14')) || { coins: 0, upgrades: { hp: 0, speed: 0, damage: 0, magnet: 0 } };
-        function saveGame() { localStorage.setItem('spaceSurvivorsSave_v14', JSON.stringify(saveData)); updateMenuCoins(); }
+        let saveData = JSON.parse(localStorage.getItem('spaceSurvivorsSave_v15')) || { coins: 0, upgrades: { hp: 0, speed: 0, damage: 0, magnet: 0 } };
+        function saveGame() { localStorage.setItem('spaceSurvivorsSave_v15', JSON.stringify(saveData)); updateMenuCoins(); }
 
         let gameState = 'title';
         let worldX = 0, worldY = 0, score = 0, frameCount = 0, gameSeconds = 0, collectedCoins = 0;
         let enemies = [], bullets = [], gems = [], coinsArr = [], floatTexts = [], particles = [];
-        let gravityZones = [], miniBlackHoles = [], destructibles = [], consumables = []; 
+        let miniBlackHoles = [], destructibles = [], consumables = []; // 🌟 移除了 gravityZones (原本的黑圈圈)
         
-        // 🌟 記錄玩家最後面朝的方向 (用於類似飛刀/鞭子的武器邏輯)
         let player = { 
             size: 16, hp: 0, maxHp: 0, exp: 0, maxExp: 5, level: 1, 
             angle: -Math.PI/2, lastFacingX: 1, lastFacingY: 0, 
@@ -392,7 +391,7 @@
         ];
 
         const STAGES = [
-            { id: 'gargantua', name: '卡岡都亞吸積盤', desc: '深空戰場。<br><b>難度：★☆☆</b>', locked: false, bgHue: 280 },
+            { id: 'gargantua', name: '卡岡都亞星際', desc: '純粹的深空戰場。<br><b>難度：★☆☆</b>', locked: false, bgHue: 280 },
             { id: 'dyson', name: '廢棄戴森球', desc: '金屬迷宮。<br><b>難度：★★☆</b> (開發中)', locked: true, bgHue: 200 }
         ];
 
@@ -510,21 +509,21 @@
             updateRow('weapon-row', 'passive-row'); updateRow('pause-weapon-row', 'pause-passive-row');
         }
 
-        // 🌟 武器數值大調：更符合早期割草感
+        // 🌟 武器數值大調：初期冷卻時間大幅下降
         function acquireWeapon(id) {
-            if(id === 'blaster') player.weapons.blaster = { level: 1, baseDamage: 10, baseCooldown: 45, baseSpeed: 15, count: 1, timer: 0, isEvolved: false };
-            if(id === 'laser') player.weapons.laser = { level: 1, baseDamage: 8, baseCooldown: 60, baseSpeed: 18, timer: 0, isEvolved: false };
-            if(id === 'drone') player.weapons.drone = { level: 1, baseDamage: 5, count: 2, baseRadius: 80, baseSpeed: 0.05, isEvolved: false };
-            if(id === 'plasma') player.weapons.plasma = { level: 1, baseDamage: 15, baseCooldown: 80, baseSpeed: 6, count: 3, baseAoe: 60, timer: 0, isEvolved: false };
-            if(id === 'aura') player.weapons.aura = { level: 1, baseDamage: 3, baseRadius: 100, baseTickRate: 20, timer: 0, isEvolved: false };
-            if(id === 'bomb') player.weapons.bomb = { level: 1, baseDamage: 25, baseCooldown: 100, baseSpeed: 8, count: 1, baseAoe: 80, timer: 0, isEvolved: false };
+            if(id === 'blaster') player.weapons.blaster = { level: 1, baseDamage: 10, baseCooldown: 30, baseSpeed: 15, count: 1, timer: 0, isEvolved: false };
+            if(id === 'laser') player.weapons.laser = { level: 1, baseDamage: 8, baseCooldown: 40, baseSpeed: 18, timer: 0, isEvolved: false };
+            if(id === 'drone') player.weapons.drone = { level: 1, baseDamage: 5, count: 2, baseRadius: 80, baseSpeed: 0.08, isEvolved: false };
+            if(id === 'plasma') player.weapons.plasma = { level: 1, baseDamage: 15, baseCooldown: 60, baseSpeed: 6, count: 3, baseAoe: 60, timer: 0, isEvolved: false };
+            if(id === 'aura') player.weapons.aura = { level: 1, baseDamage: 4, baseRadius: 100, baseTickRate: 20, timer: 0, isEvolved: false };
+            if(id === 'bomb') player.weapons.bomb = { level: 1, baseDamage: 25, baseCooldown: 80, baseSpeed: 8, count: 1, baseAoe: 80, timer: 0, isEvolved: false };
             updateInventoryUI(); calcStats();
         }
 
         function upgradeWeapon(id) {
             let w = player.weapons[id]; w.level++;
-            if(id === 'blaster') { if(w.level===2){w.count=2;} if(w.level===3){w.baseDamage+=5;} if(w.level===4){w.count=3;} if(w.level===5){w.baseDamage+=5;} if(w.level===6){w.baseSpeed+=3;} if(w.level===7){w.baseDamage+=10;} if(w.level===8){w.baseCooldown-=15;} }
-            if(id === 'laser') { if(w.level===2){w.baseDamage+=4;} if(w.level===3){w.baseCooldown-=10;} if(w.level===4){w.baseDamage+=4;} if(w.level===5){w.baseSpeed+=2;} if(w.level===6){w.baseCooldown-=10;} if(w.level===7){w.baseDamage+=6;} if(w.level===8){w.baseCooldown-=15;} }
+            if(id === 'blaster') { if(w.level===2){w.count=2;} if(w.level===3){w.baseDamage+=5;} if(w.level===4){w.count=3;} if(w.level===5){w.baseDamage+=5;} if(w.level===6){w.baseSpeed+=3;} if(w.level===7){w.baseDamage+=10;} if(w.level===8){w.baseCooldown-=10;} }
+            if(id === 'laser') { if(w.level===2){w.baseDamage+=4;} if(w.level===3){w.baseCooldown-=10;} if(w.level===4){w.baseDamage+=4;} if(w.level===5){w.baseSpeed+=2;} if(w.level===6){w.baseCooldown-=10;} if(w.level===7){w.baseDamage+=6;} if(w.level===8){w.baseCooldown-=10;} }
             if(id === 'drone') { if(w.level===2){w.baseDamage+=2;} if(w.level===3){w.count=3;} if(w.level===4){w.baseSpeed+=0.02;} if(w.level===5){w.baseRadius+=20;} if(w.level===6){w.count=4;} if(w.level===7){w.baseDamage+=3;} if(w.level===8){w.count=6;} }
             if(id === 'plasma') { if(w.level===2){w.baseAoe+=15;} if(w.level===3){w.count=4;} if(w.level===4){w.baseDamage+=5;} if(w.level===5){w.baseCooldown-=15;} if(w.level===6){w.count=5;} if(w.level===7){w.baseAoe+=25;} if(w.level===8){w.baseCooldown-=15;} }
             if(id === 'aura') { if(w.level===2){w.baseRadius+=20;} if(w.level===3){w.baseTickRate-=5;} if(w.level===4){w.baseDamage+=2;} if(w.level===5){w.baseRadius+=30;} if(w.level===6){w.baseTickRate-=5;} if(w.level===7){w.baseDamage+=3;} if(w.level===8){w.baseRadius+=40;} }
@@ -556,14 +555,14 @@
             player = { 
                 size: 16, speed: char.speed + speedBonus, hp: char.hp + hpBonus, maxHp: char.hp + hpBonus, 
                 exp: 0, maxExp: 5, level: 1, 
-                angle: -Math.PI/2, lastFacingX: 1, lastFacingY: 0, // 新增：記憶最後移動方向
+                angle: -Math.PI/2, lastFacingX: 1, lastFacingY: 0, 
                 damageFlash: 0, weapons: {}, passives: {}, dashCd: 0, isDashing: false, dashTimer: 0, invincibleTimer: 0 
             };
             
             calcStats(); acquireWeapon(char.weapon); 
             
             worldX = 0; worldY = 0; score = 0; frameCount = 0; gameSeconds = 0; collectedCoins = 0; screenShake = 0; deathTimer = 0;
-            enemies = []; bullets = []; gems = []; coinsArr = []; floatTexts = []; particles = []; gravityZones = []; miniBlackHoles = []; destructibles = []; consumables = []; 
+            enemies = []; bullets = []; gems = []; coinsArr = []; floatTexts = []; particles = []; miniBlackHoles = []; destructibles = []; consumables = []; 
             bossSpawned = false; currentBoss = null; warningTimer = 0;
             
             document.getElementById('game-ui').classList.remove('hidden');
@@ -609,44 +608,46 @@
 
         function getScreenPos(wx, wy) { return { x: wx - worldX + canvas.width / 2, y: wy - worldY + canvas.height / 2 }; }
 
-        // 🌟 史詩級 Horde 生怪系統：從畫面外緣生成一整排/圈的怪物
-        function spawnEnemy(waveMin) {
-            if (enemies.length > 400) return; // 放寬最大數量到 400
+        // 🌟 全新波次生成系統：每半秒生成一次，數量無上限狂飆
+        function spawnEnemyBatch() {
+            if (enemies.length > 600) return; // 提高同畫面怪物上限至 600 隻
 
-            const timeScale = 1 + (waveMin * 0.5);
-            let type = 'minion'; let isSwarm = false;
-
-            if (gameSeconds % 60 === 0 && gameSeconds > 0) { type = 'elite'; } 
-            else if (gameSeconds % 180 >= 170) { type = 'minion'; isSwarm = true; } 
-            else if (waveMin >= 2 && Math.random() < 0.15) { type = 'splitter'; } 
-            else if (waveMin >= 5 && Math.random() < 0.05) { type = 'elite'; }
-
-            // 🌟 怪物基礎速度大幅調降，製造「移動緩慢但數量龐大的肉牆」
-            let size, speed, hpCalc, color, vCount;
-            if (type === 'elite') { size = 30 + Math.random() * 10; speed = 0.4 + Math.random() * 0.1; hpCalc = 150 * timeScale; color = '#9f1239'; vCount = 4; } 
-            else if (type === 'splitter') { size = 20 + Math.random() * 5; speed = 0.8 + Math.random() * 0.2; hpCalc = 30 * timeScale; color = '#9a3412'; vCount = 7; } 
-            else { size = 12 + Math.random() * 4; speed = (isSwarm ? 1.5 : 0.5) + Math.random() * 0.3; hpCalc = (isSwarm ? 2 : 8) * timeScale; color = isSwarm ? '#3b82f6' : '#1e293b'; vCount = 5; }
-
-            const vertices = [];
-            for(let i=0; i<vCount; i++){ vertices.push({ a: (i/vCount) * Math.PI * 2, r: 0.7 + Math.random() * 0.6 }); }
+            let waveMin = Math.floor(gameSeconds / 60);
+            let timeScale = 1 + (waveMin * 0.3);
             
-            // 決定從螢幕哪一邊緣生成
-            let spawnCount = isSwarm ? 8 : 1;
-            let side = Math.floor(Math.random() * 4); // 0:上 1:右 2:下 3:左
-            let spawnX = worldX, spawnY = worldY;
-            let margin = 50;
+            // 隨著時間，每次生成的怪物數量變多
+            let count = 3 + Math.floor(gameSeconds / 20); 
+            
+            let isSwarm = (gameSeconds % 120 >= 105); // 每 2 分鐘的最後 15 秒觸發怪物潮
+            if (isSwarm) count *= 2; 
 
-            for(let k=0; k<spawnCount; k++) {
-                if (side === 0) { spawnX = worldX + (Math.random() - 0.5) * canvas.width; spawnY = worldY - canvas.height / 2 - margin; }
-                else if (side === 1) { spawnX = worldX + canvas.width / 2 + margin; spawnY = worldY + (Math.random() - 0.5) * canvas.height; }
-                else if (side === 2) { spawnX = worldX + (Math.random() - 0.5) * canvas.width; spawnY = worldY + canvas.height / 2 + margin; }
-                else if (side === 3) { spawnX = worldX - canvas.width / 2 - margin; spawnY = worldY + (Math.random() - 0.5) * canvas.height; }
+            let spawnRadius = Math.max(canvas.width, canvas.height) / 2 + 100;
+            
+            for(let i=0; i<count; i++) {
+                let type = 'minion';
+                if (waveMin >= 1 && Math.random() < 0.1) type = 'splitter';
+                if (gameSeconds > 0 && gameSeconds % 60 === 0 && i === 0) type = 'elite';
 
-                if(isSwarm) { // Swarm 讓他們稍微散開
-                    spawnX += (Math.random() - 0.5) * 150; spawnY += (Math.random() - 0.5) * 150;
+                // 稍微提升怪物速度，確保他們能追上玩家
+                let size, speed, hpCalc, color, vCount;
+                if (type === 'elite') { size = 30 + Math.random()*10; speed = 0.8; hpCalc = 150 * timeScale; color = '#9f1239'; vCount = 4; }
+                else if (type === 'splitter') { size = 20 + Math.random()*5; speed = 1.2; hpCalc = 30 * timeScale; color = '#9a3412'; vCount = 6; }
+                else { size = 12 + Math.random()*4; speed = (isSwarm ? 1.8 : 1.0) + Math.random()*0.5; hpCalc = (isSwarm ? 2 : 10) * timeScale; color = isSwarm ? '#3b82f6' : '#1e293b'; vCount = 5; }
+
+                const vertices = [];
+                for(let v=0; v<vCount; v++) vertices.push({ a: (v/vCount)*Math.PI*2, r: 0.7+Math.random()*0.6 });
+
+                let spawnAngle = Math.random() * Math.PI * 2;
+                if (isSwarm) {
+                    // Swarm 時怪物會從固定某個方向湧來
+                    let swarmAngle = (Math.floor(gameSeconds / 10) % 4) * (Math.PI / 2); 
+                    spawnAngle = swarmAngle + (Math.random() - 0.5); 
                 }
 
-                enemies.push({ type: type, isBoss: false, x: spawnX, y: spawnY, size: size, speed: speed, hp: hpCalc, maxHp: hpCalc, angle: 0, rotSpeed: (Math.random() - 0.5) * 0.05, vertices: vertices, knockbackX: 0, knockbackY: 0, damageFlash: 0, color: color });
+                let spawnX = worldX + Math.cos(spawnAngle) * spawnRadius;
+                let spawnY = worldY + Math.sin(spawnAngle) * spawnRadius;
+                
+                enemies.push({ type: type, isBoss: false, x: spawnX, y: spawnY, size: size, speed: speed, hp: hpCalc, maxHp: hpCalc, angle: 0, rotSpeed: (Math.random()-0.5)*0.05, vertices: vertices, knockbackX: 0, knockbackY: 0, damageFlash: 0, color: color });
             }
         }
 
@@ -749,7 +750,7 @@
             }
             for (let w in player.weapons) { 
                 const lvl = player.weapons[w].level; 
-                if (lvl < WEAPON_DB[w].maxLevel && !player.weapons[w].isEvolved) pool.push({ type: 'upgrade', id: w, name: `${WEAPON_DB[w].name} Lv.${lvl+1}`, icon: WEAPON_DB[w].icon, desc: WEAPON_DB[w].desc[lvl], tag: '強化', class: '', action: () => upgradeWeapon(w) }); 
+                if (lvl < WEAPON_DB[w].maxLevel && !w.isEvolved) pool.push({ type: 'upgrade', id: w, name: `${WEAPON_DB[w].name} Lv.${lvl+1}`, icon: WEAPON_DB[w].icon, desc: WEAPON_DB[w].desc[lvl], tag: '強化', class: '', action: () => upgradeWeapon(w) }); 
             }
 
             if (ownedPassives.length < MAX_PASSIVES) { 
@@ -785,7 +786,7 @@
             if (player.exp >= player.maxExp) { 
                 player.exp -= player.maxExp; player.level++; 
                 
-                // 🌟 早期升級更快
+                // 🌟 優化升級經驗曲線
                 if (player.level < 10) player.maxExp += 5;
                 else if (player.level < 20) player.maxExp += 10;
                 else if (player.level < 40) player.maxExp += 15;
@@ -797,7 +798,6 @@
                 spawnParticles(worldX, worldY, '#facc15', 50);
                 floatTexts.push({x: worldX, y: worldY - 40, text: "LEVEL UP!", life: 60, color: '#facc15'});
                 
-                // 升級秒殺範圍
                 enemies.forEach(en => { if (Math.hypot(worldX - en.x, worldY - en.y) < 150 && !en.isBoss && en.type !== 'elite') { en.hp = 0; } });
 
                 triggerLevelUp(); 
@@ -847,7 +847,6 @@
             let dx = 0; let dy = 0;
             if (keys['ArrowUp'] || keys['KeyW']) dy -= 1; if (keys['ArrowDown'] || keys['KeyS']) dy += 1; if (keys['ArrowLeft'] || keys['KeyA']) dx -= 1; if (keys['ArrowRight'] || keys['KeyD']) dx += 1;
             
-            // 🌟 記錄最後的移動方向，供「前鋒機砲」等方向性武器使用
             let isMoving = dx !== 0 || dy !== 0 || (isTouching && (touchVector.x !== 0 || touchVector.y !== 0));
             if (isMoving) {
                 if (dx !== 0 || dy !== 0) {
@@ -864,14 +863,12 @@
                 worldX += player.lastFacingX * currentSpeed; worldY += player.lastFacingY * currentSpeed;
             }
 
-            // --- 🌟 武器發射邏輯全翻新，對標 VS 原版武器 ---
             if (player.weapons.blaster) {
                 let w = player.weapons.blaster; w.timer++;
                 let cd = Math.max(2, Math.floor(w.baseCooldown * globalCdMult)); 
                 if (w.timer >= cd) {
                     w.timer = 0; let fDmg = w.baseDamage * globalDmgMult; let fSpeed = w.baseSpeed * globalProjSpeedMult;
                     
-                    // 前鋒機砲 (類似飛刀)：固定朝「最後移動方向」發射
                     let baseAngle = Math.atan2(player.lastFacingY, player.lastFacingX);
                     if (w.isEvolved) {
                         for(let i=0; i<w.count; i++) {
@@ -900,7 +897,6 @@
                             }
                         }
                     } else {
-                        // 脈衝雷射 (類似魔杖)：自動鎖定最近的敵人
                         let closest = null, minDist = Infinity; enemies.forEach(en => { const dist = Math.hypot(en.x - worldX, en.y - worldY); if (dist < minDist) { minDist = dist; closest = en; } });
                         if (closest && minDist < 800) { const angle = Math.atan2(closest.y - worldY, closest.x - worldX); bullets.push({ type: 'laser', x: worldX, y: worldY, vx: Math.cos(angle) * fSpeed, vy: Math.sin(angle) * fSpeed, life: 60, damage: fDmg }); }
                     }
@@ -926,30 +922,29 @@
                     if (w.isEvolved) {
                         bullets.push({ type: 'bomb', isEvo: true, x: worldX, y: worldY, vx: Math.cos(player.angle) * fSpeed * 0.5, vy: Math.sin(player.angle) * fSpeed * 0.5, life: 90, damage: fDmg, aoe: fAoe });
                     } else {
-                        // 炸彈 (類似斧頭或聖水)：隨機向外拋出
-                        for(let i=0; i<w.count; i++) { let angle = Math.random() * Math.PI * 2; bullets.push({ type: 'bomb', x: worldX, y: worldY, vx: Math.cos(angle) * fSpeed, vy: Math.sin(angle) * fSpeed, life: 40 + Math.random()*20, damage: fDmg, aoe: fAoe }); }
+                        // 炸彈給予微小引力使其有拋物線感
+                        for(let i=0; i<w.count; i++) { let angle = player.angle + (Math.random()-0.5); bullets.push({ type: 'bomb', x: worldX, y: worldY, vx: Math.cos(angle) * fSpeed, vy: Math.sin(angle) * fSpeed, life: 40 + Math.random()*20, damage: fDmg, aoe: fAoe }); }
                     }
                 }
             }
             
             const orbitals = [];
             if (player.weapons.drone) { 
-                // 無人機 (類似國王聖經)：環繞攻擊
                 let w = player.weapons.drone; let fSpeed = w.baseSpeed * globalProjSpeedMult; let fRadius = w.baseRadius * globalAreaMult;
                 const orbitSpeed = frameCount * fSpeed; 
                 for(let i=0; i < w.count; i++) { orbitals.push({ x: worldX + Math.cos(orbitSpeed + (Math.PI * 2 / w.count) * i) * fRadius, y: worldY + Math.sin(orbitSpeed + (Math.PI * 2 / w.count) * i) * fRadius }); } 
             }
 
-            // 🌟 極限波次生成系統：越往後生成頻率越高
+            // 🌟 改變生成節奏，每半秒生成一次大批怪物
             if (gameSeconds < 900) {
-                let waveMin = Math.floor(gameSeconds / 60);
-                // 基礎每 N 幀生一次怪。一開始 45 幀，越來越快，最快每 10 幀生一次
-                let spawnRate = Math.max(10, 45 - waveMin * 5); 
-                if (frameCount % spawnRate === 0) spawnEnemy(waveMin);
+                if (frameCount % 30 === 0) spawnEnemyBatch();
             }
 
             for (let i = bullets.length - 1; i >= 0; i--) { 
                 bullets[i].x += bullets[i].vx; bullets[i].y += bullets[i].vy; bullets[i].life--; 
+                // 給予未進化的炸彈「往下墜」的物理效果
+                if (bullets[i].type === 'bomb' && !bullets[i].isEvo) bullets[i].vy += 0.2; 
+
                 if (bullets[i].type === 'bomb' && bullets[i].life <= 0) {
                     spawnParticles(bullets[i].x, bullets[i].y, bullets[i].isEvo ? '#22c55e' : '#f43f5e', bullets[i].isEvo ? 80 : 30);
                     if(bullets[i].isEvo) screenShake = Math.min(screenShake + 15, 25);
@@ -990,7 +985,6 @@
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const en = enemies[i];
                 
-                // 讓敵人穩定地朝向玩家移動
                 let ex = worldX - en.x; let ey = worldY - en.y; let eDist = Math.hypot(ex, ey);
                 if(eDist > 0) { en.x += (ex / eDist) * en.speed + en.knockbackX; en.y += (ey / eDist) * en.speed + en.knockbackY; }
                 en.angle += en.rotSpeed;
@@ -1008,7 +1002,6 @@
                     damageTakenThisFrame = Math.max(damageTakenThisFrame, dmg);
                 }
 
-                // 輻射力場 (類似大蒜)：每 N 幀持續造成傷害與極微小擊退
                 if (player.weapons.aura) {
                     let w = player.weapons.aura; let fRadius = w.baseRadius * globalAreaMult;
                     if (Math.hypot(en.x - worldX, en.y - worldY) < fRadius + en.size) { 
@@ -1021,7 +1014,6 @@
                     }
                 }
 
-                // 投射物碰撞
                 for (let j = bullets.length - 1; j >= 0; j--) {
                     if(bullets[j].type === 'bomb') continue; 
                     let hitRadius = bullets[j].type === 'laser_evo' ? bullets[j].aoe : (bullets[j].type === 'plasma' && bullets[j].isEvo ? bullets[j].aoe : 15);
@@ -1061,12 +1053,11 @@
                         } else {
                             en.hp -= bullets[j].damage; 
                             let color = bullets[j].type === 'blaster' ? '#facc15' : '#38bdf8';
-                            let kbForce = bullets[j].type === 'blaster' ? 3 : 1; // 降低普攻擊退，讓怪群更密集
+                            let kbForce = bullets[j].type === 'blaster' ? 3 : 1; 
                             en.knockbackX += Math.cos(bulletAngle) * kbForce * (en.isBoss ? 0 : 1);
                             en.knockbackY += Math.sin(bulletAngle) * kbForce * (en.isBoss ? 0 : 1);
                             en.damageFlash = 5;
                             spawnParticles(bullets[j].x, bullets[j].y, color, 3); 
-                            // 🌟 傷害數字特效，像 VS 一樣往上飄
                             floatTexts.push({x: en.x + (Math.random()-0.5)*10, y: en.y, text: Math.floor(bullets[j].damage), life: 15, color: 'white'}); 
                             if (!bullets[j].isEvo) bullets.splice(j, 1); 
                         }
@@ -1102,12 +1093,11 @@
                         }
                         gems.push({ x: en.x, y: en.y, value: 5, type: 'green' });
                     } else {
-                        if (Math.random() < 0.02) coinsArr.push({ x: en.x, y: en.y, value: 1 }); 
-                        else if (Math.random() < 0.3) {
-                            // 🌟 掉落不同顏色的寶石
+                        // 🌟 大幅提升寶石掉落率至近 60%
+                        if (Math.random() < 0.6) {
                             let gemVal = 1; let gemType = 'blue';
-                            if(Math.random() < 0.1) { gemVal = 5; gemType = 'green'; }
-                            if(Math.random() < 0.02) { gemVal = 10; gemType = 'red'; }
+                            if(Math.random() < 0.15) { gemVal = 5; gemType = 'green'; }
+                            if(Math.random() < 0.05) { gemVal = 15; gemType = 'red'; }
                             gems.push({ x: en.x, y: en.y, value: gemVal, type: gemType }); 
                         }
                     }
@@ -1118,7 +1108,7 @@
             if (player.invincibleTimer > 0) player.invincibleTimer--;
             if (damageTakenThisFrame > 0) { 
                 player.hp -= damageTakenThisFrame; player.damageFlash = 10; 
-                player.invincibleTimer = 30; // 🌟 縮短無敵時間(0.5秒)，如果被包圍會死很快
+                player.invincibleTimer = 30; 
                 screenShake = Math.min(screenShake + 10, 20); 
                 
                 if (player.hp <= 0 && gameState === 'playing') { 
@@ -1215,7 +1205,6 @@
                 gems.forEach(gem => { 
                     const pos = getScreenPos(gem.x, gem.y); 
                     if(pos.x > -10 && pos.x < canvas.width+10 && pos.y > -10 && pos.y < canvas.height+10) { 
-                        // 🌟 根據寶石價值給予顏色
                         ctx.fillStyle = gem.type === 'red' ? '#f87171' : (gem.type === 'green' ? '#34d399' : '#38bdf8');
                         ctx.shadowColor = ctx.fillStyle;
                         ctx.beginPath(); ctx.moveTo(pos.x, pos.y - 5); ctx.lineTo(pos.x + 3, pos.y - 1); ctx.lineTo(pos.x + 7, pos.y); ctx.lineTo(pos.x + 3, pos.y + 1); ctx.lineTo(pos.x, pos.y + 5); ctx.lineTo(pos.x - 3, pos.y + 1); ctx.lineTo(pos.x - 7, pos.y); ctx.lineTo(pos.x - 3, pos.y - 1); ctx.closePath(); ctx.fill(); 
@@ -1226,6 +1215,7 @@
                 coinsArr.forEach(c => { const pos = getScreenPos(c.x, c.y); ctx.beginPath(); ctx.arc(pos.x, pos.y, 5, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ca8a04'; ctx.beginPath(); ctx.arc(pos.x, pos.y, 2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#facc15'; });
                 ctx.shadowBlur = 0;
 
+                // 🌟 優化敵人繪製：移除不需要的繪圖指令以提升海量敵人的效能
                 enemies.forEach(en => {
                     const pos = getScreenPos(en.x, en.y); ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate(en.angle); 
                     if (en.damageFlash > 0) { ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#f87171'; } 
@@ -1295,31 +1285,26 @@
             ctx.restore();
 
             if (gameState === 'dying') {
-                // 繪製爆炸衝擊波與全螢幕閃白
                 ctx.save(); 
                 ctx.translate(canvas.width / 2, canvas.height / 2);
                 
-                // 衝擊波光環
                 ctx.beginPath(); 
                 ctx.arc(0, 0, deathShockwaveRadius, 0, Math.PI * 2); 
                 ctx.lineWidth = Math.max(1, 40 - deathShockwaveRadius / 25); 
                 ctx.strokeStyle = `rgba(255, 255, 255, ${Math.max(0, 1 - deathShockwaveRadius / 1500)})`; 
                 ctx.stroke();
 
-                // 衝擊波內核紅光
                 ctx.beginPath(); 
                 ctx.arc(0, 0, deathShockwaveRadius * 0.8, 0, Math.PI * 2); 
                 ctx.fillStyle = `rgba(239, 68, 68, ${Math.max(0, 0.4 - deathShockwaveRadius / 1200)})`; 
                 ctx.fill();
                 ctx.restore();
 
-                // 瞬間致盲白光
                 if (deathFlashAlpha > 0.01) {
                     ctx.fillStyle = `rgba(255, 255, 255, ${deathFlashAlpha})`;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
 
-                // 🌟 調整過後的血紅疊加層 (配合極短的 15 幀)
                 const fadeAlpha = Math.min(0.8, (15 - deathTimer) / 15);
                 ctx.fillStyle = `rgba(159, 18, 57, ${fadeAlpha})`; 
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
