@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>星際倖存者：輓救行動 (Boss戰優化版)</title>
+    <title>星際倖存者：輓救行動 (血條平衡版)</title>
     <style>
         * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
         body { margin: 0; padding: 0; background: #020205; overflow: hidden; color: #e0f2fe; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -41,7 +41,8 @@
         .stats-container { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 18px; font-weight: bold; text-shadow: 1px 1px 0px #000; font-family: monospace; }
         .stat-item { background: rgba(15,23,42,0.7); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); min-width: 100px; text-align: right; }
         
-        #pause-btn-ingame { background: rgba(15, 23, 42, 0.8); border: 2px solid #0ea5e9; color: #38bdf8; font-size: 18px; border-radius: 6px; padding: 6px 12px; cursor: pointer; margin-top: 5px; font-weight: bold; box-shadow: 0 2px 0 #0284c7; }
+        #pause-btn-ingame { background: rgba(15, 23, 42, 0.8); border: 2px solid #0ea5e9; color: #38bdf8; font-size: 18px; border-radius: 6px; padding: 6px 12px; cursor: pointer; margin-top: 5px; font-weight: bold; box-shadow: 0 2px 0 #0284c7; transition: 0.1s;}
+        #pause-btn-ingame:active { transform: translateY(2px); box-shadow: 0 0 0 #0284c7; }
         
         #dash-btn { position: absolute; bottom: calc(30px + env(safe-area-inset-bottom, 0px)); right: calc(30px + env(safe-area-inset-right, 0px)); background: rgba(139, 92, 246, 0.6); border: 2px solid #a78bfa; color: white; font-size: 16px; font-weight: bold; border-radius: 50%; width: 80px; height: 80px; cursor: pointer; pointer-events: auto; display: flex; justify-content: center; align-items: center; transition: all 0.2s; box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); z-index: 10;}
         #dash-btn:active { background: #8b5cf6; transform: scale(0.9); }
@@ -158,7 +159,7 @@
             <p class="blinking-text" style="margin-top: 80px;">- 點擊螢幕任意處進入系統 -</p>
         </div>
         <div style="position: absolute; bottom: calc(env(safe-area-inset-bottom, 20px) + 30px); font-size: 14px; color: #94a3b8; letter-spacing: 3px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">CREATED BY 林小木</div>
-        <div style="position: absolute; bottom: env(safe-area-inset-bottom, 20px); font-size: 12px; color: #475569; letter-spacing: 2px;">VER 3.1.0 | BOSS FIGHT REWORKED</div>
+        <div style="position: absolute; bottom: env(safe-area-inset-bottom, 20px); font-size: 12px; color: #475569; letter-spacing: 2px;">VER 3.2.0 | HP BALANCED</div>
     </div>
 
     <!-- Main Menu -->
@@ -280,7 +281,7 @@
         const $ = id => document.getElementById(id);
         
         // ==========================================
-        // iOS 觸控保護
+        // 🚨 觸控保護與按鈕事件處理
         // ==========================================
         document.addEventListener('gesturestart', e => e.preventDefault());
         document.addEventListener('gesturechange', e => e.preventDefault());
@@ -302,16 +303,14 @@
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize); resize();
 
-        let saveData = JSON.parse(localStorage.getItem('spaceSurvivorsSave_v31')) || { coins: 0, upgrades: { hp: 0, speed: 0, damage: 0, magnet: 0 } };
-        function saveGame() { localStorage.setItem('spaceSurvivorsSave_v31', JSON.stringify(saveData)); updateMenuCoins(); }
+        let saveData = JSON.parse(localStorage.getItem('spaceSurvivorsSave_v32')) || { coins: 0, upgrades: { hp: 0, speed: 0, damage: 0, magnet: 0 } };
+        function saveGame() { localStorage.setItem('spaceSurvivorsSave_v32', JSON.stringify(saveData)); updateMenuCoins(); }
 
         let gameState = 'title', worldX = 0, worldY = 0, score = 0, frameCount = 0, gameSeconds = 0, collectedCoins = 0;
         let enemies = [], bullets = [], gems = [], coinsArr = [], floatTexts = [], particles = [], destructibles = [], consumables = [];
         let player = { size: 16, hp: 0, maxHp: 0, exp: 0, maxExp: 5, level: 1, angle: -Math.PI/2, lastFacingX: 1, lastFacingY: 0, damageFlash: 0, weapons: {}, passives: {}, dashCd: 0, isDashing: false, dashTimer: 0, invincibleTimer: 0 };
-        
         let bossSpawned = false, currentBoss = null, screenShake = 0, deathTimer = 0, deathShockwaveRadius = 0, deathFlashAlpha = 0;
-        let bossDeathTimer = 0, bossX = 0, bossY = 0; // 🌟 新增 Boss 死亡特效變數
-        
+        let bossDeathTimer = 0, bossX = 0, bossY = 0;
         let globalDmgMult = 1, globalCdMult = 1, globalProjSpeedMult = 1, globalAreaMult = 1, globalDurationMult = 1;
         let selectedCharIndex = 0, selectedStageIndex = 0;
 
@@ -336,12 +335,13 @@
             regen: { name: '奈米修復', icon: '🩹', maxLevel: 5, desc: '每5秒回血1點' }, duration: { name: '持久電池', icon: '🔋', maxLevel: 5, desc: '持續時間 +15%' }
         };
 
+        // 🌟 角色基礎血量全面大幅提升 (1.5倍 ~ 2倍)
         const CHARACTERS = [
-            { id: 'ranger', name: '安東尼奧 (人類)', icon: '🧑‍🚀', hp: 100, speed: 4.0, damage: 1.0, weapon: 'blaster', desc: '標準戰機。每 10 級提升 10% 傷害。' },
-            { id: 'heavy', name: '格羅克 (獸人)', icon: '🦍', hp: 180, speed: 3.0, damage: 0.8, weapon: 'drone', desc: '重裝坦克。高血量、低速度。' },
-            { id: 'scout', name: '艾莉亞 (精靈)', icon: '🧝‍♀️', hp: 70, speed: 5.5, damage: 0.9, weapon: 'laser', desc: '輕型飛翼。極高機動性。' },
-            { id: 'engineer', name: 'C-137 (智械)', icon: '🤖', hp: 120, speed: 3.8, damage: 1.0, weapon: 'mine', desc: '維修圓盤。武器持續時間 +20%。' },
-            { id: 'ghost', name: '澤拉圖 (星客)', icon: '👽', hp: 80, speed: 4.8, damage: 1.2, weapon: 'blade', desc: '隱形機。基礎傷害較高。' }
+            { id: 'ranger', name: '安東尼奧 (人類)', icon: '🧑‍🚀', hp: 150, speed: 4.0, damage: 1.0, weapon: 'blaster', desc: '標準戰機。每 10 級提升 10% 傷害。' },
+            { id: 'heavy', name: '格羅克 (獸人)', icon: '🦍', hp: 250, speed: 3.0, damage: 0.8, weapon: 'drone', desc: '重裝坦克。高血量、低速度。' },
+            { id: 'scout', name: '艾莉亞 (精靈)', icon: '🧝‍♀️', hp: 100, speed: 5.5, damage: 0.9, weapon: 'laser', desc: '輕型飛翼。極高機動性。' },
+            { id: 'engineer', name: 'C-137 (智械)', icon: '🤖', hp: 160, speed: 3.8, damage: 1.0, weapon: 'mine', desc: '維修圓盤。武器持續時間 +20%。' },
+            { id: 'ghost', name: '澤拉圖 (星客)', icon: '👽', hp: 120, speed: 4.8, damage: 1.2, weapon: 'blade', desc: '隱形機。基礎傷害較高。' }
         ];
 
         const STAGES = [ { id: 'gargantua', name: '卡岡都亞星域', desc: '純粹的深空戰場。<br><b>難度：★☆☆</b>', locked: false, bgHue: 280 }, { id: 'dyson', name: '廢棄戴森球', desc: '金屬迷宮。<br><b>難度：★★☆</b> (開發中)', locked: true, bgHue: 200 } ];
@@ -554,14 +554,11 @@
             }
         }
 
-        // 🌟 史詩 Boss 血量暴增至 60 萬
         function spawnLeviathan() {
-            enemies = []; 
-            const spawnRadius = Math.max(canvas.width, canvas.height) / 2 + 100;
+            enemies = []; const spawnRadius = Math.max(canvas.width, canvas.height) / 2 + 100;
             const vertices = []; for(let i=0; i<12; i++){ vertices.push({ a: (i/12) * Math.PI * 2, r: i%2===0 ? 1 : 0.6 }); }
-            currentBoss = { type: 'leviathan', isBoss: true, name: '【星噬者 - 利維坦】', x: worldX, y: worldY - spawnRadius, size: 100, speed: player.speed * 0.6, hp: 600000, maxHp: 600000, angle: 0, rotSpeed: 0.05, vertices: vertices, actionTimer: 0, knockbackX: 0, knockbackY: 0, damageFlash: 0, color: '#000000', kbResist: 0 }; 
-            enemies.push(currentBoss); 
-            $('time-display').classList.add('boss');
+            currentBoss = { type: 'leviathan', isBoss: true, name: '【星噬者 - 利維坦】', x: worldX, y: worldY - spawnRadius, size: 100, speed: player.speed * 0.6, hp: 150000, maxHp: 150000, angle: 0, rotSpeed: 0.05, vertices: vertices, actionTimer: 0, knockbackX: 0, knockbackY: 0, damageFlash: 0, color: '#000000', kbResist: 0 }; 
+            enemies.push(currentBoss); $('time-display').classList.add('boss');
         }
 
         function spawnParticles(x, y, color, count) {
@@ -599,7 +596,6 @@
         function closeChest() { $('chest-modal').classList.add('hidden'); gameState = 'playing'; }
 
         function triggerLevelUp() {
-            // 🌟 升級時不補血，完全還原 VS 難度
             gameState = 'level_up'; const modal = $('level-up-modal'), container = $('upgrade-options');
             modal.classList.remove('hidden'); container.innerHTML = '';
             let pool = []; const ownedWeapons = Object.keys(player.weapons), ownedPassives = Object.keys(player.passives);
@@ -638,24 +634,12 @@
                 if (deathTimer <= 0) gameOver(false); return; 
             }
             
-            // 🌟 史詩 Boss 死亡動畫子彈時間
             if (gameState === 'boss_dying') {
-                bossDeathTimer--;
-                screenShake = Math.max(15, screenShake); // 持續震動
-                
-                if (frameCount % 4 === 0) {
-                    spawnParticles(bossX + (Math.random()-0.5)*250, bossY + (Math.random()-0.5)*250, '#fbbf24', 40);
-                    spawnParticles(bossX + (Math.random()-0.5)*250, bossY + (Math.random()-0.5)*250, '#ef4444', 40);
-                    floatTexts.push({x: bossX + (Math.random()-0.5)*200, y: bossY + (Math.random()-0.5)*200, text: "CRITICAL!", life: 30, color: '#facc15'});
-                }
-                
-                // 動畫粒子更新
+                bossDeathTimer--; screenShake = Math.max(15, screenShake); 
+                if (frameCount % 4 === 0) { spawnParticles(bossX + (Math.random()-0.5)*250, bossY + (Math.random()-0.5)*250, '#fbbf24', 40); spawnParticles(bossX + (Math.random()-0.5)*250, bossY + (Math.random()-0.5)*250, '#ef4444', 40); floatTexts.push({x: bossX + (Math.random()-0.5)*200, y: bossY + (Math.random()-0.5)*200, text: "CRITICAL!", life: 30, color: '#facc15'}); }
                 for (let i = particles.length - 1; i >= 0; i--) { particles[i].x += particles[i].vx; particles[i].y += particles[i].vy; particles[i].life--; particles[i].vx *= 0.95; particles[i].vy *= 0.95; if (particles[i].life <= 0) particles.splice(i, 1); }
                 for (let i = floatTexts.length - 1; i >= 0; i--) { floatTexts[i].y -= 0.5; floatTexts[i].life--; if (floatTexts[i].life <= 0) floatTexts.splice(i, 1); }
-                
-                // 結束並勝利
-                if (bossDeathTimer <= 0) gameOver(true);
-                return;
+                if (bossDeathTimer <= 0) gameOver(true); return;
             }
 
             frameCount++;
@@ -788,8 +772,8 @@
 
                 if (player.isDashing) { if (!en.isBoss && en.type !== 'death' && Math.hypot(worldX - en.x, worldY - en.y) < player.size + en.size + 15) { en.hp = 0; spawnParticles(en.x, en.y, '#a78bfa', 5); } } 
                 else if (player.invincibleTimer <= 0 && Math.hypot(worldX - en.x, worldY - en.y) < player.size + en.size - 5) {
-                    // 🌟 修改：正確平衡傷害，Boss碰觸只扣50，不會被9999秒殺
-                    let dmg = 10; if (en.type === 'splitter') dmg = 15; if (en.type === 'tank') dmg = 20; if (en.type === 'charger') dmg = 25; if (en.type === 'elite') dmg = 30; if (en.type === 'boss_bullet') dmg = 40; if (en.type === 'leviathan') dmg = 50; if (en.type === 'death') dmg = 9999; 
+                    // 🌟 傷害全面下修，不再瞬間被秒殺
+                    let dmg = 5; if (en.type === 'splitter') dmg = 8; if (en.type === 'tank') dmg = 10; if (en.type === 'charger') dmg = 12; if (en.type === 'elite') dmg = 15; if (en.type === 'boss_bullet') dmg = 20; if (en.type === 'leviathan') dmg = 30; if (en.type === 'death') dmg = 9999; 
                     damageTakenThisFrame = Math.max(damageTakenThisFrame, dmg);
                 }
 
@@ -820,22 +804,9 @@
                     orbitals.forEach(orb => { if (Math.hypot(orb.x - en.x, orb.y - en.y) < en.size + 15 && frameCount % 10 === 0) { en.hp -= fDmg; let kbAngle = Math.atan2(en.y - orb.y, en.x - orb.x); en.knockbackX += Math.cos(kbAngle) * 2 * en.kbResist; en.knockbackY += Math.sin(kbAngle) * 2 * en.kbResist; en.damageFlash = 5; spawnParticles(orb.x, orb.y, '#facc15', 2); addFloatingText(en, fDmg, 'white'); } }); 
                 }
 
-                // 🌟 當生命歸零時的判定
                 if (en.hp <= 0 && en.type !== 'death') {
                     if (en.type === 'leviathan') { 
-                        // 🌟 Boss 死亡不再立刻結束，進入 3 秒的「史詩死亡特效」
-                        if (gameState !== 'boss_dying') {
-                            gameState = 'boss_dying';
-                            bossDeathTimer = 180;
-                            bossX = en.x;
-                            bossY = en.y;
-                            screenShake = 50;
-                            bullets = []; // 清空子彈
-                            enemies = enemies.filter(e => e === en); // 清空所有雜兵
-                            en.speed = 0;
-                            en.actionTimer = -9999;
-                        }
-                        return; // 保留 Boss 屍體在畫面上爆炸
+                        if (gameState !== 'boss_dying') { gameState = 'boss_dying'; bossDeathTimer = 180; bossX = en.x; bossY = en.y; screenShake = 50; bullets = []; enemies = enemies.filter(e => e === en); en.speed = 0; en.actionTimer = -9999; } return; 
                     }
                     if (en.type === 'elite' || en.type === 'tank') { spawnParticles(en.x, en.y, '#ef4444', 8); }
                     if (en.type === 'elite') { consumables.push({ type: 'chest', x: en.x, y: en.y }); screenShake = Math.min(screenShake + 8, 15); } 
@@ -848,8 +819,11 @@
 
             if (player.invincibleTimer > 0) player.invincibleTimer--;
             if (damageTakenThisFrame > 0) { 
-                player.hp -= damageTakenThisFrame; player.damageFlash = 10; player.invincibleTimer = 30; screenShake = Math.min(screenShake + 10, 20); 
-                if (player.hp <= 0 && gameState === 'playing') { gameState = 'dying'; deathTimer = 15; screenShake = 120; deathShockwaveRadius = 1; deathFlashAlpha = 1.0; $('game-ui').classList.add('hidden'); spawnParticles(worldX, worldY, '#38bdf8', 150); spawnParticles(worldX, worldY, '#facc15', 100); spawnParticles(worldX, worldY, '#ef4444', 100); floatTexts.push({x: worldX, y: worldY - 20, text: "機體摧毀！", life: 100, color: '#f87171'}); return; } 
+                player.hp -= damageTakenThisFrame; player.damageFlash = 10; 
+                // 🌟 被攻擊後的無敵時間從 30幀(0.5秒) 延長到 45幀(0.75秒)，防止被連續重疊碰撞秒殺
+                player.invincibleTimer = 45; 
+                screenShake = Math.min(screenShake + 10, 20); 
+                if (player.hp <= 0 && gameState === 'playing') { gameState = 'dying'; deathTimer = 15; screenShake = 120; deathShockwaveRadius = 1; deathFlashAlpha = 1.0; $('game-ui').classList.add('hidden'); spawnParticles(worldX, worldY, '#38bdf8', 150); spawnParticles(worldX, worldY, '#facc15', 100); spawnParticles(worldX, worldY, '#ef4444', 100); for(let i=0; i<80; i++) { const angle = Math.random() * Math.PI * 2, speed = Math.random() * 20 + 10; particles.push({ x: worldX, y: worldY, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 15 + Math.random() * 10, maxLife: 25, color: '#ffffff', size: Math.random() * 5 + 2 }); } floatTexts.push({x: worldX, y: worldY - 20, text: "機體摧毀！", life: 100, color: '#f87171'}); return; } 
             }
             if (player.damageFlash > 0) player.damageFlash--;
 
@@ -924,41 +898,38 @@
                     drawPlayerShip(ctx, CHARACTERS[selectedCharIndex].id, player.isDashing, player.damageFlash);
                     ctx.globalAlpha = 1.0; ctx.restore(); 
 
-                    // 🌟 更清晰具體的機甲血量條與文字顯示
-                    const barW = 80;
+                    // 🌟 移除具體數字，改為乾淨且更具質感的純血條顯示
+                    const barW = 60;
                     ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(canvas.width / 2, canvas.height / 2, player.pickupRadius, 0, Math.PI*2); ctx.stroke();
                     const hpPercent = Math.max(0, player.hp / player.maxHp); 
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(canvas.width / 2 - barW/2, canvas.height / 2 + 25, barW, 6); 
-                    ctx.fillStyle = hpPercent > 0.5 ? '#4ade80' : (hpPercent > 0.25 ? '#facc15' : '#ef4444'); ctx.fillRect(canvas.width / 2 - barW/2, canvas.height / 2 + 25, barW * hpPercent, 6); 
-                    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1; ctx.strokeRect(canvas.width / 2 - barW/2, canvas.height / 2 + 25, barW, 6);
                     
-                    ctx.font = '10px monospace'; ctx.fillStyle = 'white'; ctx.textAlign = 'center';
-                    ctx.fillText(`${Math.floor(player.hp)}/${player.maxHp}`, canvas.width / 2, canvas.height / 2 + 42);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; 
+                    ctx.fillRect(canvas.width / 2 - barW/2, canvas.height / 2 + 25, barW, 5); 
+                    ctx.fillStyle = hpPercent > 0.5 ? '#4ade80' : (hpPercent > 0.25 ? '#facc15' : '#ef4444'); 
+                    ctx.fillRect(canvas.width / 2 - barW/2, canvas.height / 2 + 25, barW * hpPercent, 5); 
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 1; 
+                    ctx.strokeRect(canvas.width / 2 - barW/2, canvas.height / 2 + 25, barW, 5);
 
                     if (isTouching && joystickOrigin && joystickCurrent && gameState === 'playing') { ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.beginPath(); ctx.arc(joystickOrigin.x, joystickOrigin.y, 40, 0, Math.PI * 2); ctx.fill(); const dist = Math.hypot(joystickCurrent.x - joystickOrigin.x, joystickCurrent.y - joystickOrigin.y); const renderX = joystickOrigin.x + (dist > 0 ? ((joystickCurrent.x - joystickOrigin.x) / dist) * Math.min(dist, 40) : 0); const renderY = joystickOrigin.y + (dist > 0 ? ((joystickCurrent.y - joystickOrigin.y) / dist) * Math.min(dist, 40) : 0); ctx.fillStyle = 'rgba(56, 189, 248, 0.5)'; ctx.beginPath(); ctx.arc(renderX, renderY, 15, 0, Math.PI * 2); ctx.fill(); }
                 }
                 
-                // 🌟 Boss 專屬大血條顯示
+                // Boss 專屬大血條顯示
                 if (bossSpawned && enemies.find(e => e.type === 'leviathan')) {
                     let boss = enemies.find(e => e.type === 'leviathan');
                     let bhpPercent = Math.max(0, boss.hp / boss.maxHp);
-                    ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(canvas.width/2 - 150, 60, 300, 20);
-                    ctx.fillStyle = '#ef4444'; ctx.fillRect(canvas.width/2 - 150, 60, 300 * bhpPercent, 20);
-                    ctx.strokeStyle = '#fca5a5'; ctx.lineWidth = 2; ctx.strokeRect(canvas.width/2 - 150, 60, 300, 20);
-                    ctx.fillStyle = 'white'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
-                    ctx.fillText(`星噬者 - 利維坦  ${Math.floor(boss.hp)} / ${boss.maxHp}`, canvas.width/2, 75);
+                    ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(canvas.width/2 - 150, 60, 300, 15);
+                    ctx.fillStyle = '#ef4444'; ctx.fillRect(canvas.width/2 - 150, 60, 300 * bhpPercent, 15);
+                    ctx.strokeStyle = '#fca5a5'; ctx.lineWidth = 2; ctx.strokeRect(canvas.width/2 - 150, 60, 300, 15);
+                    ctx.fillStyle = 'white'; ctx.font = 'bold 16px monospace'; ctx.textAlign = 'center';
+                    ctx.fillText(`星噬者 - 利維坦`, canvas.width/2, 50);
                 }
 
                 ctx.font = 'bold 16px monospace'; ctx.textAlign = 'center'; floatTexts.forEach(ft => { const pos = getScreenPos(ft.x, ft.y); ctx.globalAlpha = ft.life / 30; ctx.fillStyle = ft.color || 'white'; ctx.fillText(ft.text, pos.x, pos.y - 15); }); ctx.globalAlpha = 1.0;
             }
             ctx.restore();
 
-            // 🌟 史詩 Boss 死亡白光吞噬特效
             if (gameState === 'boss_dying') {
-                if (bossDeathTimer < 50) {
-                    ctx.fillStyle = `rgba(255, 255, 255, ${1 - bossDeathTimer/50})`;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                }
+                if (bossDeathTimer < 50) { ctx.fillStyle = `rgba(255, 255, 255, ${1 - bossDeathTimer/50})`; ctx.fillRect(0, 0, canvas.width, canvas.height); }
             }
 
             if (gameState === 'dying') {
