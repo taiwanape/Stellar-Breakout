@@ -263,7 +263,8 @@
 
     <!-- 標題主選單 -->
     <div id="title-screen" class="modal title-screen-layout">
-        <h1 class="mega-title">VAMPIRE<br>SURVIVORS</h1>
+        <!-- 🌟 正名為 SPACE SURVIVORS -->
+        <h1 class="mega-title">SPACE<br>SURVIVORS</h1>
         <h2 class="sub-title">星際輓救行動</h2>
         <div class="main-menu-btns">
             <button class="btn btn-green" onclick="goToCharSelect()">開始遊戲</button>
@@ -275,7 +276,7 @@
         </div>
     </div>
 
-    <!-- 選角介面 (全自適應) -->
+    <!-- 選角介面 -->
     <div id="char-select-menu" class="modal hidden">
         <div class="vs-header">
             <button class="icon-btn" onclick="backToMainMenu()">🔙</button>
@@ -294,7 +295,6 @@
                 </div>
                 <div class="char-stats-grid" id="char-stats"></div>
             </div>
-            <!-- 可滑動的自適應網格 -->
             <div class="char-grid-bottom" id="char-grid"></div>
             <div class="bottom-action-bar">
                 <button class="btn btn-green" onclick="goToStageSelect()">確認</button>
@@ -335,7 +335,7 @@
         <div class="general-list-container" id="shop-items-container"></div>
     </div>
 
-    <!-- 升級彈窗 (無背景純色) -->
+    <!-- 升級彈窗 -->
     <div id="level-up-modal" class="modal hidden" style="background: rgba(0,0,0,0.85); align-items: center; justify-content: flex-start; padding-top: 8vh;">
         <h1 style="color: #facc15; text-shadow: 2px 2px 0 #000; margin: 0 0 2vh 0; font-size: clamp(32px, 8vw, 48px); font-weight: 900;">等級提升</h1>
         <div class="upgrade-cards" id="upgrade-options" style="padding-top:0; width: 100%;"></div>
@@ -389,7 +389,6 @@
     <canvas id="gameCanvas"></canvas>
 
     <script>
-        // 🍏 Apple 全系列防雙擊放大保護
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
         document.addEventListener('dblclick', function(e) { e.preventDefault(); }, { passive: false });
         let lastTouchEnd = 0;
@@ -408,7 +407,7 @@
         // 🛡️ 終極存檔保險箱
         let saveData = { coins: 0, upgrades: {}, achievements: [] };
         try {
-            const stored = localStorage.getItem('spaceSurvivorsSave_v44');
+            const stored = localStorage.getItem('spaceSurvivorsSave_v5');
             if (stored) {
                 const parsed = JSON.parse(stored);
                 if (parsed.coins !== undefined) saveData.coins = parseInt(parsed.coins) || 0;
@@ -418,7 +417,7 @@
         } catch(e) { console.error("存檔異常，已重置防護"); }
         
         function saveGame() { 
-            localStorage.setItem('spaceSurvivorsSave_v44', JSON.stringify(saveData)); 
+            localStorage.setItem('spaceSurvivorsSave_v5', JSON.stringify(saveData)); 
             updateMenuCoins(); 
         }
 
