@@ -21,12 +21,13 @@
         .top-exp-bar { position: absolute; top: 0; left: 0; width: 100%; height: 10px; background: rgba(0,0,0,0.5); z-index: 10; pointer-events: none; }
         #exp-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd); width: 0%; box-shadow: 0 0 10px #3b82f6; transition: width 0.2s ease-out; }
 
-        /* 左上：裝備欄 */
+        /* 左上：裝備欄 (照抄截圖，極致縮小) */
         .hud-left { position: absolute; top: max(15px, env(safe-area-inset-top)); left: max(15px, env(safe-area-inset-left)); z-index: 9; display: flex; flex-direction: column; gap: 2px;}
-        .inv-row { display: flex; gap: 2px; }
-        .weapon-slot { width: 28px; height: 28px; background: rgba(0,0,0,0.6); border: 1px solid #334155; display: flex; justify-content: center; align-items: center; font-size: 16px; position: relative; }
-        .weapon-slot.empty { border-color: rgba(255,255,255,0.1); }
-        .weapon-slot .lvl-badge { position: absolute; bottom: 0; right: 0; background: #0284c7; color: white; font-size: 9px; font-weight: bold; padding: 0 2px; font-family: monospace; border-top-left-radius: 3px;}
+        .inv-row { display: flex; gap: 2px; flex-wrap: nowrap; } /* 強制不換行 */
+        .weapon-slot { width: 22px; height: 22px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); display: flex; justify-content: center; align-items: center; font-size: 12px; position: relative; }
+        .weapon-slot.empty { border-color: rgba(255,255,255,0.05); }
+        .weapon-slot.passive { border-radius: 50%; }
+        .weapon-slot .lvl-badge { position: absolute; bottom: -2px; right: -2px; background: #0284c7; color: white; font-size: 8px; font-weight: bold; padding: 1px 2px; font-family: monospace; border-top-left-radius: 2px; line-height: 1;}
         .weapon-slot.evolved { border-color: #facc15; box-shadow: 0 0 5px #facc15; }
         
         /* 中上：計時器 */
@@ -35,8 +36,8 @@
         
         /* 右上：數值與暫停 */
         .hud-right { position: absolute; top: max(15px, env(safe-area-inset-top)); right: max(15px, env(safe-area-inset-right)); z-index: 9; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-        .stats-text { font-size: 16px; font-weight: bold; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; font-family: monospace; display: flex; align-items: center; justify-content: flex-end; }
-        .stats-icon { width: 22px; text-align: center; margin-right: 4px;}
+        .stats-text { font-size: 15px; font-weight: bold; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; font-family: monospace; display: flex; align-items: center; justify-content: flex-end; }
+        .stats-icon { width: 20px; text-align: center; margin-right: 4px;}
         .stats-val { display: inline-block; min-width: 30px; text-align: left; }
         #pause-btn-ingame { background: rgba(0,0,0,0.6); border: 1px solid #475569; color: #fff; font-size: 12px; border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
 
@@ -90,7 +91,7 @@
         .char-slot { background: #0f172a; border: 2px solid #334155; border-radius: 8px; width: 56px; height: 56px; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; }
         .char-slot.selected { border-color: #facc15; background: #450a0a; }
 
-        /* === 列表卡片 (升級、商店、關卡) === */
+        /* === 列表卡片 (修復文字溢出破版) === */
         .list-card { background: #111827; border: 1px solid #374151; border-radius: 6px; padding: 12px; width: 100%; max-width: 450px; display: flex; align-items: center; text-align: left; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .list-card:active { transform: translateY(2px); }
         .card-icon-box { width: 44px; height: 44px; background: rgba(0,0,0,0.4); border: 1px solid #4b5563; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 24px; margin-right: 15px; flex-shrink: 0;}
@@ -100,7 +101,7 @@
         .card-tag { font-size: 11px; color: #fff; padding: 1px 0; }
         .card-desc { margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.4; }
         
-        .stage-card { flex-direction: column; align-items: flex-start; padding: 16px; }
+        .stage-card { flex-direction: column; align-items: flex-start; padding: 16px; height: auto; justify-content: center;} /* 修復破版 */
         .stage-card.selected { border-color: #facc15; border-width: 2px; background: rgba(69, 10, 10, 0.4); }
         .stage-card h3 { margin: 0 0 6px 0; font-size: 18px; color: #fff; font-weight: bold;}
         .stage-card p { margin: 0; font-size: 13px; color: #cbd5e1; line-height: 1.4; }
@@ -127,8 +128,8 @@
             .main-menu-btns { max-width: 400px; gap: 25px; }
             .modal-header { height: 80px; padding: 0 30px; }
             .modal-header .title { font-size: 28px; }
-            .weapon-slot { width: 40px; height: 40px; font-size: 20px; }
-            .weapon-slot .lvl-badge { font-size: 12px; }
+            .weapon-slot { width: 34px; height: 34px; font-size: 18px; }
+            .weapon-slot .lvl-badge { font-size: 10px; }
             .time-display { font-size: 42px; }
             .stats-text { font-size: 20px; }
         }
@@ -136,7 +137,6 @@
 </head>
 <body>
 
-    <!-- 🌟 專屬封面 Splash Screen -->
     <div id="splash-screen" class="overlay" style="z-index: 50; pointer-events: auto; background: #0a0a0a; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;" onclick="enterTitle()">
         <h1 class="mega-title">UNIVERSE<br>SURVIVORS</h1>
         <h2 class="sub-title">宇宙倖存者</h2>
@@ -144,7 +144,6 @@
         <div class="creator-text">製作人：指揮官 & Gemini</div>
     </div>
 
-    <!-- 🎯 遊戲 HUD -->
     <div id="game-ui" class="overlay hidden">
         <div id="achievement-popup">
             <div style="font-size: 20px;">🏆</div>
@@ -174,7 +173,6 @@
         <button id="dash-btn" onclick="triggerDash()"><span>空間</span><span>摺疊</span></button>
     </div>
 
-    <!-- 標題主選單 -->
     <div id="title-screen" class="modal hidden" style="justify-content: center; align-items: center;">
         <div class="menu-coins-display">🪙 <span id="menu-coins">0</span></div>
         <h1 class="mega-title">UNIVERSE<br>SURVIVORS</h1>
@@ -187,7 +185,6 @@
         <div class="creator-text">製作人：指揮官 & Gemini</div>
     </div>
 
-    <!-- 🌟 選角介面 (經典不裁切) -->
     <div id="char-select-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="backToMainMenu()">BACK</button>
@@ -218,7 +215,6 @@
         </div>
     </div>
 
-    <!-- 地圖選擇介面 -->
     <div id="stage-select-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="goToCharSelect()">BACK</button>
@@ -231,7 +227,6 @@
         </div>
     </div>
 
-    <!-- 圖鑑系統 -->
     <div id="achievements-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="backToMainMenu()">BACK</button>
@@ -241,7 +236,6 @@
         <div class="modal-content" id="ach-list-container" style="padding-bottom: 30px;"></div>
     </div>
 
-    <!-- 商店系統 -->
     <div id="shop-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="backToMainMenu()">BACK</button>
@@ -251,7 +245,6 @@
         <div class="modal-content" id="shop-items-container" style="padding-bottom: 30px;"></div>
     </div>
 
-    <!-- 🌟 升級彈窗 (防重疊設計) -->
     <div id="level-up-modal" class="popup-overlay hidden">
         <div class="popup-box">
             <h1 class="popup-title">等級提升</h1>
@@ -259,7 +252,6 @@
         </div>
     </div>
 
-    <!-- 寶箱彈窗 -->
     <div id="chest-modal" class="popup-overlay hidden">
         <div class="popup-box" style="align-items: center; text-align: center;">
             <h1 class="popup-title" style="margin-bottom: 0;">回收物資</h1>
@@ -272,7 +264,6 @@
         </div>
     </div>
 
-    <!-- 暫停彈窗 -->
     <div id="pause-modal" class="popup-overlay hidden">
         <div class="popup-box" style="align-items: center;">
             <h1 class="popup-title" style="color: #fff; margin-bottom: 15px;">已暫停</h1>
@@ -288,7 +279,6 @@
         </div>
     </div>
 
-    <!-- 結束彈窗 -->
     <div id="game-over-modal" class="popup-overlay hidden">
         <div class="popup-box" style="align-items: center;">
             <h1 id="game-over-title" class="popup-title" style="color: #f87171;">遊戲結束</h1>
@@ -305,6 +295,7 @@
     <canvas id="gameCanvas"></canvas>
 
     <script>
+        // 🍏 防放大與基礎設定
         document.addEventListener('gesturestart', e => e.preventDefault());
         document.addEventListener('dblclick', e => e.preventDefault(), {passive:false});
         const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
@@ -332,8 +323,8 @@
         function soundLevelUp() { if(!audioCtx) return; playTone(440, 'sine', 0.2, 0.1); setTimeout(()=>playTone(554, 'sine', 0.2, 0.1), 100); setTimeout(()=>playTone(659, 'sine', 0.4, 0.1), 200); }
 
         let saveData = { coins: 0, upgrades: {}, achievements: [] };
-        try { let s = localStorage.getItem('uniSurvSave_v9'); if(s){ let p=JSON.parse(s); saveData.coins=p.coins||0; saveData.upgrades=p.upgrades||{}; saveData.achievements=p.achievements||[]; } }catch(e){}
-        function saveGame() { localStorage.setItem('uniSurvSave_v9', JSON.stringify(saveData)); updateMenuCoins(); }
+        try { let s = localStorage.getItem('uniSurvSave_v8_1'); if(s){ let p=JSON.parse(s); saveData.coins=p.coins||0; saveData.upgrades=p.upgrades||{}; saveData.achievements=p.achievements||[]; } }catch(e){}
+        function saveGame() { localStorage.setItem('uniSurvSave_v8_1', JSON.stringify(saveData)); updateMenuCoins(); }
 
         let selectedCharIndex=0, selectedStageIndex=0, gameState='splash';
         let worldX=0, worldY=0, score=0, frameCount=0, gameSeconds=0, collectedCoins=0;
@@ -365,7 +356,7 @@
         function enterTitle() { initAudio(); soundClick(); hideAllModals(); document.getElementById('title-screen').classList.remove('hidden'); gameState='menu'; updateMenuCoins(); }
         function backToMainMenu() { soundClick(); enterTitle(); }
         function goToShop() { soundClick(); hideAllModals(); document.getElementById('shop-menu').classList.remove('hidden'); gameState='shop'; renderShop(); }
-        function goToAchievements() { soundClick(); hideAllModals(); document.getElementById('achievements-menu').classList.remove('hidden'); let c=document.getElementById('ach-list-container'); c.innerHTML=''; ACHIEVEMENTS.forEach(a=>{ let u=saveData.achievements&&saveData.achievements.includes(a.id); let d=document.createElement('div'); d.className=`list-card ${u?'':'locked'}`; d.style.filter=u?'none':'grayscale(1)'; d.innerHTML=`<div class="card-icon-box" style="font-size:30px;">${u?a.icon:'❓'}</div><div class="card-content"><div class="card-title-row"><h3>${u?a.title:'未解鎖'}</h3></div><p class="card-desc">${u?a.desc:('「'+a.hint+'」')}</p>${u?`<p style="color:#facc15; font-size:11px; margin-top:6px; font-weight:bold;">獎勵: ${a.reward}</p>`:''}</div>`; c.appendChild(d); }); }
+        function goToAchievements() { soundClick(); hideAllModals(); document.getElementById('achievements-menu').classList.remove('hidden'); let c=document.getElementById('ach-list-container'); c.innerHTML=''; ACHIEVEMENTS.forEach(a=>{ let u=saveData.achievements&&saveData.achievements.includes(a.id); let d=document.createElement('div'); d.className=`list-card ach-item ${u?'unlocked':''}`; d.innerHTML=u?`<div class="card-icon-box" style="font-size:24px; border:none; background:transparent;">${a.icon}</div><div class="card-content"><div class="card-title-row"><h3>${a.title}</h3></div><p class="card-desc">${a.desc}</p><p style="color:#facc15; font-size:11px; margin-top:6px; font-weight:bold;">獎勵: ${a.reward}</p></div>`:`<div class="card-icon-box" style="font-size:24px; border:none; background:transparent;">❓</div><div class="card-content"><div class="card-title-row"><h3>未解鎖</h3></div><p class="card-desc">「${a.hint}」</p></div>`; c.appendChild(d); }); }
         function goToCharSelect() { soundClick(); hideAllModals(); document.getElementById('char-select-menu').classList.remove('hidden'); gameState='char_select'; renderCharSelect(); }
         function goToStageSelect() { soundClick(); hideAllModals(); if(saveData.achievements&&saveData.achievements.includes('survive_5m')){STAGES[1].locked=false;STAGES[1].desc='難度：★★☆';} document.getElementById('stage-select-menu').classList.remove('hidden'); gameState='stage_select'; renderStageSelect(); }
         function updateMenuCoins() { safeUpdate('menu-coins',saveData.coins); safeUpdate('shop-coins-display',saveData.coins); safeUpdate('char-menu-coins',saveData.coins); safeUpdate('ingame-coin-display',collectedCoins); }
@@ -378,7 +369,7 @@
             updateMenuCoins(); 
         }
         function renderStageSelect() { let l=document.getElementById('stage-list'); l.innerHTML=''; STAGES.forEach((s,i)=>{ let d=document.createElement('div'); d.className=`list-card stage-card ${i===selectedStageIndex?'selected':''} ${s.locked?'locked':''}`; d.innerHTML=`<h3>${s.name}</h3><p>${s.desc}</p>`; if(!s.locked)d.onclick=()=>{soundClick();selectedStageIndex=i;renderStageSelect();}; l.appendChild(d); }); }
-        function renderShop() { let c=document.getElementById('shop-items-container'); c.innerHTML=''; for(let k in shopConfig){ let i=shopConfig[k], lv=saveData.upgrades[k]||0, cost=i.baseCost*(lv+1), max=lv>=i.maxLevel; let d=document.createElement('div'); d.className='list-card'; d.innerHTML=`<div class="card-icon-box">⚙️</div><div class="card-content"><div class="card-title-row"><h3>${i.name}</h3><span class="card-tag" style="color:#94a3b8">Lv.${lv}/${i.maxLevel}</span></div><p class="card-desc">${i.desc}</p></div><button class="btn btn-green btn-small" style="margin-left:10px; flex-shrink:0;" ${max||saveData.coins<cost?'disabled':''} onclick="event.stopPropagation(); buyUpgrade('${k}',${cost})">${max?'MAX':`💰${cost}`}</button>`; c.appendChild(d); } updateMenuCoins(); }
+        function renderShop() { let c=document.getElementById('shop-items-container'); c.innerHTML=''; for(let k in shopConfig){ let i=shopConfig[k], lv=saveData.upgrades[k]||0, cost=i.baseCost*(lv+1), max=lv>=i.maxLevel; let d=document.createElement('div'); d.className='list-card shop-card'; d.innerHTML=`<div class="card-icon-box" style="border:none; background:transparent;">⚙️</div><div class="card-content"><div class="card-title-row"><h3>${i.name}</h3><span class="card-tag" style="color:#94a3b8">Lv.${lv}/${i.maxLevel}</span></div><p class="card-desc">${i.desc}</p></div><button class="btn btn-green btn-small" style="margin-left:10px; flex-shrink:0;" ${max||saveData.coins<cost?'disabled':''} onclick="event.stopPropagation(); buyUpgrade('${k}',${cost})">${max?'MAX':`💰${cost}`}</button>`; c.appendChild(d); } updateMenuCoins(); }
         function buyUpgrade(k,c) { soundLevelUp(); if(saveData.coins>=c){saveData.coins-=c;saveData.upgrades[k]=(saveData.upgrades[k]||0)+1;saveGame();renderShop();} }
         function checkAchievement(id) { if(!saveData.achievements)saveData.achievements=[]; if(!saveData.achievements.includes(id)){ saveData.achievements.push(id); if(id==='kill_elite')saveData.coins+=500; saveGame(); let a=ACHIEVEMENTS.find(x=>x.id===id); if(a){soundLevelUp(); safeUpdate('ach-popup-title',a.title); let p = document.getElementById('achievement-popup'); p.style.display='flex'; setTimeout(()=>{p.style.display='none';},3500);} } }
         function calcStats() { let c=CHARACTERS[selectedCharIndex]; globalDmgMult=c.damage+(saveData.upgrades.damage||0)*0.05; globalCdMult=1; globalProjSpeedMult=1; globalAreaMult=1; globalDurationMult=1; if(player.passives.damage)globalDmgMult+=player.passives.damage.level*0.1; if(player.passives.cooldown)globalCdMult-=player.passives.cooldown.level*0.08; if(player.passives.proj_speed)globalProjSpeedMult+=player.passives.proj_speed.level*0.1; if(player.passives.area)globalAreaMult+=player.passives.area.level*0.1; if(player.passives.duration)globalDurationMult+=player.passives.duration.level*0.15; player.pickupRadius=100*(1+(saveData.upgrades.magnet||0)*0.1); if(player.passives.magnet)player.pickupRadius*=(1+player.passives.magnet.level*0.25); globalCdMult=Math.max(0.1,globalCdMult); if(c.id==='ranger')globalDmgMult+=Math.floor(player.level/10)*0.1; if(c.id==='engineer')globalDurationMult+=0.2; if(c.id==='scavenger')player.pickupRadius+=50; }
@@ -428,12 +419,13 @@
 
         let chestRewardItem=null;
         function triggerChestAnimation() {
-            soundLevelUp(); gameState='chest'; document.getElementById('chest-modal').classList.remove('hidden'); let b=document.getElementById('chest-box'); b.className='chest-img'; b.innerText='📦'; b.style.pointerEvents='auto'; let crui=document.getElementById('chest-reward-ui'); crui.style.display='none'; crui.classList.add('hidden'); chestRewardItem=null; let gold=100+Math.floor(Math.random()*100), readyEvo=null; for(let id in player.weapons){let w=player.weapons[id];if(w.level>=WEAPON_DB[id].maxLevel&&!w.isEvolved&&player.passives[WEAPON_DB[id].evoReq]){readyEvo=id;break;}} if(readyEvo){let db=WEAPON_DB[readyEvo];chestRewardItem={type:'evo',id:readyEvo,html:`<div style="font-size:36px; margin-bottom:10px;">${db.evoIcon}</div><h2 style="margin:0 0 5px 0;color:#facc15;font-size:20px;">${db.evoName}</h2><p style="margin:0;color:#94a3b8;font-size:14px;">武器進化！突破極限！</p>`};gold+=200;}else{let u=[];for(let w in player.weapons)if(player.weapons[w].level<WEAPON_DB[w].maxLevel)u.push({id:w,type:'weapon'});for(let p in player.passives)if(player.passives[p].level<PASSIVE_DB[p].maxLevel)u.push({id:p,type:'passive'});if(u.length>0){let p=u[Math.floor(Math.random()*u.length)],db=p.type==='weapon'?WEAPON_DB[p.id]:PASSIVE_DB[p.id],nl=(p.type==='weapon'?player.weapons[p.id].level:player.passives[p.id].level)+1;chestRewardItem={type:p.type,id:p.id,html:`<div style="font-size:36px; margin-bottom:10px;">${db.icon}</div><h2 style="margin:0 0 5px 0;color:#f8fafc;font-size:20px;">${db.name} <span style="color:#94a3b8; font-size:14px;">Lv.${nl}</span></h2><p style="margin:0;color:#94a3b8;font-size:14px;">${db.desc[nl-1]||db.desc}</p>`};}else{chestRewardItem={type:'gold',html:`<div style="font-size:36px; margin-bottom:10px;">💰</div><h2 style="margin:0 0 5px 0;color:#facc15;font-size:20px;">巨型金幣</h2><p style="margin:0;color:#94a3b8;font-size:14px;">獲得大量物資</p>`};gold+=500;}} safeUpdate('chest-coins',gold); document.getElementById('chest-item-box').innerHTML=chestRewardItem.html; b.onclick=()=>{soundClick(); b.className='chest-img opening';setTimeout(()=>{b.innerText='✨';soundLevelUp(); spawnParticles(canvas.width/2,canvas.height/2,'#facc15',300);crui.style.display='flex'; crui.classList.remove('hidden'); collectedCoins+=gold;safeUpdate('ingame-coin-display',collectedCoins);if(chestRewardItem.type==='evo')evolveWeapon(chestRewardItem.id);else if(chestRewardItem.type==='weapon')upgradeWeapon(chestRewardItem.id);else if(chestRewardItem.type==='passive')upgradePassive(chestRewardItem.id);},1500);}; 
+            soundLevelUp(); gameState='chest'; document.getElementById('chest-modal').classList.remove('hidden'); let b=document.getElementById('chest-box'); b.className='chest-img'; b.innerText='📦'; b.style.pointerEvents='auto'; let crui=document.getElementById('chest-reward-ui'); crui.style.display='none'; crui.classList.add('hidden'); chestRewardItem=null; let gold=100+Math.floor(Math.random()*100), readyEvo=null; for(let id in player.weapons){let w=player.weapons[id];if(w.level>=WEAPON_DB[id].maxLevel&&!w.isEvolved&&player.passives[WEAPON_DB[id].evoReq]){readyEvo=id;break;}} if(readyEvo){let db=WEAPON_DB[readyEvo];chestRewardItem={type:'evo',id:readyEvo,html:`<div class="card-icon-box" style="font-size:30px; border:none; background:transparent;">${db.evoIcon}</div><div class="card-content"><div class="card-title-row"><h3>${db.evoName}</h3><span class="card-tag evo-tag">進化</span></div><p class="card-desc" style="color:#facc15;">突破極限！</p></div>`};gold+=200;}else{let u=[];for(let w in player.weapons)if(player.weapons[w].level<WEAPON_DB[w].maxLevel)u.push({id:w,type:'weapon'});for(let p in player.passives)if(player.passives[p].level<PASSIVE_DB[p].maxLevel)u.push({id:p,type:'passive'});if(u.length>0){let p=u[Math.floor(Math.random()*u.length)],db=p.type==='weapon'?WEAPON_DB[p.id]:PASSIVE_DB[p.id],nl=(p.type==='weapon'?player.weapons[p.id].level:player.passives[p.id].level)+1;chestRewardItem={type:p.type,id:p.id,html:`<div class="card-icon-box" style="font-size:30px; border:none; background:transparent;">${db.icon}</div><div class="card-content"><div class="card-title-row"><h3>${db.name}</h3><span class="card-tag">Lv.${nl}</span></div><p class="card-desc">${db.desc[nl-1]||db.desc}</p></div>`};}else{chestRewardItem={type:'gold',html:`<div class="card-icon-box" style="font-size:30px; border:none; background:transparent;">💰</div><div class="card-content"><div class="card-title-row"><h3 style="color:#facc15;">巨型金幣</h3><span class="card-tag new">財富</span></div><p class="card-desc">獲得大量物資</p></div>`};gold+=500;}} safeUpdate('chest-coins',gold); document.getElementById('chest-item-box').innerHTML=chestRewardItem.html; document.getElementById('chest-item-box').className='list-card'; b.onclick=()=>{soundClick(); b.className='chest-img opening';setTimeout(()=>{b.innerText='✨';soundLevelUp(); spawnParticles(canvas.width/2,canvas.height/2,'#facc15',300);crui.style.display='flex'; crui.classList.remove('hidden'); collectedCoins+=gold;safeUpdate('ingame-coin-display',collectedCoins);if(chestRewardItem.type==='evo')evolveWeapon(chestRewardItem.id);else if(chestRewardItem.type==='weapon')upgradeWeapon(chestRewardItem.id);else if(chestRewardItem.type==='passive')upgradePassive(chestRewardItem.id);},1500);}; 
         }
         function closeChest() { soundClick(); document.getElementById('chest-modal').classList.add('hidden'); gameState='playing'; }
         function triggerLevelUp() { soundLevelUp(); gameState='level_up'; document.getElementById('level-up-modal').classList.remove('hidden'); let c=document.getElementById('upgrade-options'); c.innerHTML=''; let p=[]; if(Object.keys(player.weapons).length<6)for(let w in WEAPON_DB)if(!player.weapons[w])p.push({n:WEAPON_DB[w].name,i:WEAPON_DB[w].icon,d:WEAPON_DB[w].desc[0],t:'新武裝',cl:'new',a:()=>{acquireWeapon(w)}}); for(let w in player.weapons){let l=player.weapons[w].level;if(l<WEAPON_DB[w].maxLevel&&!player.weapons[w].isEvolved)p.push({n:WEAPON_DB[w].name, lv:l+1, i:WEAPON_DB[w].icon,d:WEAPON_DB[w].desc[l],t:'強化',cl:'',a:()=>{upgradeWeapon(w)}});} if(Object.keys(player.passives).length<6)for(let ps in PASSIVE_DB)if(!player.passives[ps])p.push({n:PASSIVE_DB[ps].name,i:PASSIVE_DB[ps].icon,d:PASSIVE_DB[ps].desc,t:'新裝備',cl:'passive',a:()=>{acquirePassive(ps)}}); for(let ps in player.passives){let l=player.passives[ps].level;if(l<PASSIVE_DB[ps].maxLevel)p.push({n:PASSIVE_DB[ps].name, lv:l+1, i:PASSIVE_DB[ps].icon,d:PASSIVE_DB[ps].desc,t:'強化',cl:'passive',a:()=>{upgradePassive(ps)}});} if(p.length===0){p.push({n:'醫療包',i:'🍗',d:'立刻恢復 50 點生命值',t:'物資',cl:'',a:()=>{player.hp=Math.min(player.maxHp,player.hp+50)}});p.push({n:'小金庫',i:'💰',d:'獲得 25 金幣',t:'物資',cl:'',a:()=>{collectedCoins+=25;safeUpdate('ingame-coin-display',collectedCoins)}});} let ch=p.sort(()=>0.5-Math.random()).slice(0,Math.random()<0.1?4:3); ch.forEach(x=>{let d=document.createElement('div');d.className=`list-card ${x.cl==='new'?'chest':''}`;d.innerHTML=`<div class="card-icon-box">${x.i}</div><div class="card-content"><div class="card-title-row"><h3>${x.n}</h3><span class="card-tag ${x.t==='新武裝'||x.t==='新裝備'?'new':''}">${x.lv?('Lv.'+x.lv):x.t}</span></div><p class="card-desc">${x.d}</p></div>`;d.onclick=()=>{soundClick(); x.a();gameState='playing';document.getElementById('level-up-modal').classList.add('hidden');};c.appendChild(d);}); }
         function checkLevelUp() { if(player.exp>=player.maxExp){player.exp-=player.maxExp;player.level++;if(player.level===10)checkAchievement('reach_lv10');if(player.level<10)player.maxExp+=5+player.level*2;else if(player.level<20)player.maxExp+=10+player.level*4;else if(player.level<40)player.maxExp+=30+player.level*8;else player.maxExp+=50+player.level*15;player.maxHp+=2;player.hp=player.maxHp;safeUpdate('level-display',player.level);spawnParticles(worldX,worldY,'#facc15',50);floatTexts.push({x:worldX,y:worldY-80,text:"LEVEL UP!",life:60,color:'#facc15'});enemies.forEach(e=>{if(Math.hypot(worldX-e.x,worldY-e.y)<150&&!e.isBoss&&e.type!=='elite'&&e.type!=='tank')e.hp=0;});triggerLevelUp();} document.getElementById('exp-fill').style.width=Math.min(100,(player.exp/player.maxExp*100))+'%'; }
-        // 🚫 移除了一般攻擊的傷害跳字功能，保持畫面整潔
+        
+        // 🚫 拔除普通攻擊傷害跳字
         function addFloatingText(en,text,col) { floatTexts.push({x:en.x+(Math.random()-0.5)*10,y:en.y,text:text,life:40,color:col}); }
 
         function update() {
@@ -521,7 +513,7 @@
             if(player.damageFlash>0)player.damageFlash--;
             for(let i=gems.length-1;i>=0;i--){let g=gems[i];if(!g.isMoving&&Math.hypot(worldX-g.x,worldY-g.y)<player.pickupRadius){g.isMoving=true;g.speed=1;}if(g.isMoving){g.speed=Math.min(25,g.speed*1.15);let a=Math.atan2(worldY-g.y,worldX-g.x);g.x+=Math.cos(a)*g.speed;g.y+=Math.sin(a)*g.speed;if(Math.hypot(worldX-g.x,worldY-g.y)<player.size+15){player.exp+=g.value;gems.splice(i,1);soundGem();checkLevelUp();}}}
             for(let i=coinsArr.length-1;i>=0;i--){let c=coinsArr[i];if(!c.isMoving&&Math.hypot(worldX-c.x,worldY-c.y)<player.pickupRadius){c.isMoving=true;c.speed=1;}if(c.isMoving){c.speed=Math.min(25,c.speed*1.15);let a=Math.atan2(worldY-c.y,worldX-c.x);c.x+=Math.cos(a)*c.speed;c.y+=Math.sin(a)*c.speed;if(Math.hypot(worldX-c.x,worldY-c.y)<player.size+15){collectedCoins+=c.value;safeUpdate('ingame-coin-display',collectedCoins);coinsArr.splice(i,1);soundGem();}}}
-            for(let i=consumables.length-1;i>=0;i--){let c=consumables[i],d=Math.hypot(worldX-c.x,worldY-c.y);if(d<player.pickupRadius){c.x+=Math.cos(Math.atan2(worldY-c.y,worldX-c.x))*18;c.y+=Math.sin(Math.atan2(worldY-c.y,worldX-c.x))*18;if(d<player.size+20){soundLevelUp(); if(c.type==='heal'){player.hp=Math.min(player.maxHp,player.hp+50);addFloatingText(player,"+50 HP",'#4ade80');}if(c.type==='bomb'){spawnParticles(worldX,worldY,'#f43f5e',80);screenShake=Math.min(screenShake+30,40);enemies.forEach(e=>{if(e.isBoss||e.type==='death'||e.type==='leviathan'){e.hp-=500;e.damageFlash=10;}else e.hp=0;});floatTexts.push({x:worldX,y:worldY-20,text:"全域爆破！",life:60,color:'#f43f5e'});}if(c.type==='magnet'){gems.forEach(g=>{g.x=worldX;g.y=worldY;});floatTexts.push({x:worldX,y:worldY-20,text:"全域吸收！",life:60,color:'#38bdf8'});}if(c.type==='chest')triggerChestAnimation();consumables.splice(i,1);}}}
+            for(let i=consumables.length-1;i>=0;i--){let c=consumables[i],d=Math.hypot(worldX-c.x,worldY-c.y);if(d<player.pickupRadius){c.x+=Math.cos(Math.atan2(worldY-c.y,worldX-c.x))*18;c.y+=Math.sin(Math.atan2(worldY-c.y,worldX-c.x))*18;if(d<player.size+20){soundLevelUp(); if(c.type==='heal'){player.hp=Math.min(player.maxHp,player.hp+50);}if(c.type==='bomb'){spawnParticles(worldX,worldY,'#f43f5e',80);screenShake=Math.min(screenShake+30,40);enemies.forEach(e=>{if(e.isBoss||e.type==='death'||e.type==='leviathan'){e.hp-=500;e.damageFlash=10;}else e.hp=0;});}if(c.type==='magnet'){gems.forEach(g=>{g.x=worldX;g.y=worldY;});}if(c.type==='chest')triggerChestAnimation();consumables.splice(i,1);}}}
         }
 
         function drawRadarPointer(tX,tY,c) { let dx=tX-worldX, dy=tY-worldY, d=Math.hypot(dx,dy); if(d>Math.max(canvas.width,canvas.height)/2){let a=Math.atan2(dy,dx), hw=canvas.width/2-30, hh=canvas.height/2-30, sc=Math.min(hw/Math.abs(Math.cos(a)),hh/Math.abs(Math.sin(a))); ctx.save(); ctx.translate(canvas.width/2+Math.cos(a)*sc,canvas.height/2+Math.sin(a)*sc); ctx.rotate(a); ctx.globalAlpha=0.5+Math.sin(frameCount*0.1)*0.5; ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(15,0); ctx.lineTo(-10,10); ctx.lineTo(-5,0); ctx.lineTo(-10,-10); ctx.closePath(); ctx.fill(); ctx.restore(); } }
