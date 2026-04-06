@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>宇宙倖存者</title>
+    <title>星際突圍</title>
     <style>
         /* 🍏 基礎重置與蘋果字體 */
         * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; margin: 0; padding: 0; }
-        body { background: #0a0a0a; overflow: hidden; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; touch-action: none; overscroll-behavior: none; width: 100vw; height: 100vh; height: 100dvh; }
+        body, html { width: 100%; height: 100%; background: #0a0a0a; overflow: hidden; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; touch-action: none; overscroll-behavior: none; }
+        
+        #game-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; }
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
         
         /* 🛡️ 鐵壁佈局：覆蓋層與模態視窗 */
@@ -18,13 +20,13 @@
         button { outline: none; border: none; cursor: pointer; pointer-events: auto; font-family: inherit; }
 
         /* === 🎯 完美復刻 HUD (絕對隔離防重疊) === */
-        .top-exp-bar { position: absolute; top: 0; left: 0; width: 100%; height: 8px; background: rgba(0,0,0,0.7); z-index: 10; pointer-events: none; border-bottom: 2px solid #1e293b;}
+        .top-exp-bar { position: absolute; top: 0; left: 0; width: 100%; height: 8px; background: rgba(0,0,0,0.7); z-index: 10; pointer-events: none; border-bottom: 1px solid #1e293b;}
         #exp-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #93c5fd); width: 0%; box-shadow: 0 0 10px #3b82f6; transition: width 0.2s ease-out; }
 
-        /* 左上：裝備欄 (照抄截圖，精巧雙排) */
+        /* 左上：裝備欄 (照抄截圖，精巧雙排，絕對不換行) */
         .hud-left { position: absolute; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); z-index: 9; display: flex; flex-direction: column; gap: 2px;}
         .inv-row { display: flex; gap: 2px; flex-wrap: nowrap; } 
-        .weapon-slot { width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 1px solid #334155; display: flex; justify-content: center; align-items: center; font-size: 13px; position: relative; border-radius: 2px;}
+        .weapon-slot { width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 1px solid #334155; display: flex; justify-content: center; align-items: center; font-size: 14px; position: relative; border-radius: 2px;}
         .weapon-slot.empty { border-color: rgba(255,255,255,0.1); }
         .weapon-slot.passive { border-radius: 50%; }
         .weapon-slot .lvl-badge { position: absolute; bottom: -2px; right: -2px; background: #0284c7; color: white; font-size: 8px; font-weight: bold; padding: 1px 2px; font-family: monospace; border-top-left-radius: 2px; line-height: 1; z-index: 2;}
@@ -48,29 +50,30 @@
         #radiation-warning { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(239,68,68,0) 50%, rgba(239,68,68,0.4) 100%); pointer-events: none; z-index: 8; display: none; justify-content: center; align-items: center; }
 
         /* === 標題與主選單 === */
-        #title-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .center-layout { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100%; width: 100%; }
         .mega-title { font-size: 52px; color: #facc15; text-shadow: 4px 4px 0 #9f1239; letter-spacing: 2px; font-weight: 900; margin: 0 0 10px 0; line-height: 1.1; }
-        .sub-title { font-size: 18px; color: #e2e8f0; letter-spacing: 12px; margin: 0 0 50px 0; text-shadow: 2px 2px 0 #000; }
+        .sub-title { font-size: 20px; color: #e2e8f0; letter-spacing: 12px; margin: 0 0 50px 0; text-shadow: 2px 2px 0 #000; }
         .main-menu-btns { display: flex; flex-direction: column; width: 85%; max-width: 300px; gap: 16px; }
-        .btn-main { padding: 16px; font-size: 20px; color: #fff; border-radius: 6px; font-weight: bold; text-shadow: 1px 1px 0 #000; box-shadow: 0 4px 0 #000; border: 1px solid rgba(255,255,255,0.1); width: 100%; letter-spacing: 2px;}
+        .btn-main { padding: 16px; font-size: 20px; color: #fff; border-radius: 6px; font-weight: bold; text-shadow: 1px 1px 0 #000; box-shadow: 0 4px 0 #000; border: 1px solid rgba(255,255,255,0.1); width: 100%; letter-spacing: 2px; text-transform: uppercase;}
         .btn-main:active { transform: translateY(4px); box-shadow: 0 0 0 #000; }
         .btn-green-main { background: linear-gradient(180deg, #1b4d3e, #064e3b); }
         .btn-blue-main { background: linear-gradient(180deg, #1e3a8a, #172554); }
         .btn-brown-main { background: linear-gradient(180deg, #b45309, #78350f); }
         
         .menu-coins-display { position: absolute; bottom: max(20px, env(safe-area-inset-bottom)); left: max(20px, env(safe-area-inset-left)); font-size: 20px; font-weight: bold; color: #facc15; text-shadow: 2px 2px 0 #000; display: flex; align-items: center; gap: 8px;}
-        .creator-text { position: absolute; bottom: max(20px, env(safe-area-inset-bottom)); right: max(20px, env(safe-area-inset-right)); color: #64748b; font-size: 12px; font-weight: bold;}
+        .creator-text { position: absolute; bottom: max(20px, env(safe-area-inset-bottom)); right: max(20px, env(safe-area-inset-right)); color: #64748b; font-size: 14px; font-weight: bold; letter-spacing: 1px;}
 
         .blinking-text { font-size: 18px; color: #fca5a5; animation: blink 1.5s infinite; font-weight: bold; text-shadow: 2px 2px 0 #000; margin-top: 40px; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* === 模態視窗共用 (頭部、內容、底部) === */
+        /* === 模態視窗共用 === */
         .modal-header { height: calc(60px + env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; padding: env(safe-area-inset-top) max(15px, env(safe-area-inset-right)) 0 max(15px, env(safe-area-inset-left)); background: #000; border-bottom: 2px solid #450a0a; flex-shrink: 0; z-index: 2; }
         .modal-header .title { font-size: 20px; font-weight: bold; color: #facc15; margin: 0; }
-        .icon-btn { background: #1e293b; border: 1px solid #475569; color: white; font-size: 14px; padding: 6px 14px; border-radius: 6px; box-shadow: 0 3px 0 #020617; font-weight: bold;}
+        .icon-btn { background: #1e293b; border: 1px solid #475569; color: white; font-size: 16px; padding: 6px 12px; border-radius: 6px; box-shadow: 0 3px 0 #020617; font-weight: bold;}
         .icon-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #020617; }
         
         .modal-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px max(15px, env(safe-area-inset-right)) 15px max(15px, env(safe-area-inset-left)); z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 15px;}
+        .modal-content.no-footer { padding-bottom: max(30px, env(safe-area-inset-bottom)); }
         
         .modal-footer { padding: 15px max(15px, env(safe-area-inset-right)) max(15px, env(safe-area-inset-bottom)) max(15px, env(safe-area-inset-left)); display: flex; justify-content: center; align-items: center; background: #000; border-top: 2px solid #450a0a; flex-shrink: 0; z-index: 2; }
         
@@ -78,6 +81,7 @@
         .char-details-container { background: #000; border: 1px solid #334155; border-radius: 8px; width: 100%; max-width: 500px; display: flex; flex-direction: column; }
         .char-details-top { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #1e293b;}
         .char-sprite-large { font-size: 40px; width: 64px; height: 64px; background: #0f172a; border: 2px solid #facc15; display: flex; justify-content: center; align-items: center; border-radius: 8px; margin-right: 15px; box-shadow: inset 0 0 10px #000;}
+        .char-info-text { flex: 1; min-width: 0; text-align: left;}
         .char-info-text h2 { margin: 0 0 5px 0; color: #fff; font-size: 22px; }
         .char-weapon-info { display: inline-flex; align-items: center; background: #1e293b; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #cbd5e1; gap: 4px;}
         .char-info-text p { margin: 8px 0 0 0; font-size: 12px; color: #94a3b8; line-height: 1.4; }
@@ -87,21 +91,29 @@
         .stat-label { color: #cbd5e1; } 
         .stat-value { color: #facc15; text-align: right;}
         
-        /* 🎯 網格靠左對齊 */
+        /* 🎯 選角網格：靠左對齊 */
         .char-grid-bottom { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 10px; width: 100%; max-width: 500px; margin-top: 5px;}
         .char-slot { background: #0f172a; border: 2px solid #334155; border-radius: 8px; width: 56px; height: 56px; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; }
         .char-slot.selected { border-color: #facc15; background: #450a0a; }
 
-        /* === 列表卡片 (升級、商店、關卡) === */
-        .list-card { background: #111827; border: 1px solid #374151; border-radius: 6px; padding: 12px; width: 100%; max-width: 450px; display: flex; align-items: center; text-align: left; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .list-card:active { transform: translateY(2px); }
-        .card-icon-box { width: 44px; height: 44px; background: rgba(0,0,0,0.4); border: 1px solid #4b5563; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 24px; margin-right: 15px; flex-shrink: 0;}
-        .card-content { flex: 1; }
-        .card-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;}
-        .card-title-row h3 { margin: 0; font-size: 16px; color: #fff; font-weight: normal;}
-        .card-tag { font-size: 11px; color: #fff; padding: 1px 0; }
-        .card-desc { margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.4; }
+        /* === 🌟 列表卡片防擠壓佈局 (升級、商店) === */
+        .list-card { background: #111827; border: 1px solid #374151; border-radius: 6px; padding: 12px; width: 100%; max-width: 450px; display: flex; align-items: center; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 12px;}
+        .list-card.clickable { cursor: pointer; }
+        .list-card.clickable:active { transform: translateY(2px); }
+        .card-icon-box { width: 44px; height: 44px; background: rgba(0,0,0,0.4); border: 1px solid #4b5563; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 24px; margin-right: 12px; flex-shrink: 0;}
         
+        /* 防文字擠壓核心寫法 */
+        .card-content { flex: 1; min-width: 0; } 
+        .card-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;}
+        .card-title-row h3 { margin: 0; font-size: 16px; color: #fff; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
+        .card-tag { font-size: 11px; color: #9ca3af; padding: 1px 0; flex-shrink: 0;}
+        .card-desc { margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.4; word-break: break-word;}
+        
+        /* 商店購買按鈕專屬防擠壓 */
+        .btn-buy { padding: 8px 14px; font-size: 14px; background: linear-gradient(180deg, #1b4d3e, #064e3b); color: #fff; border: 1px solid #047857; border-bottom: 3px solid #022c22; border-radius: 6px; font-weight: bold; cursor: pointer; text-shadow: 1px 1px 0 #000; box-shadow: 0 3px 0 #000; flex-shrink: 0; margin-left: 10px; white-space: nowrap; }
+        .btn-buy:active { transform: translateY(3px); box-shadow: 0 0 0 #000; border-bottom-width: 1px; margin-top: 2px;}
+        .btn-buy:disabled { background: #1e293b; border-color: #334155; border-bottom-color: #0f172a; color: #64748b; cursor: not-allowed; }
+
         .stage-card { flex-direction: column; align-items: flex-start; padding: 16px; height: auto; justify-content: center;}
         .stage-card.selected { border-color: #facc15; border-width: 2px; background: rgba(69, 10, 10, 0.4); }
         .stage-card h3 { margin: 0 0 6px 0; font-size: 18px; color: #fff; font-weight: bold;}
@@ -111,11 +123,11 @@
         /* === 🌟 彈窗 (置中防重疊) === */
         .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 50; padding: 20px; }
         .popup-box { width: 100%; max-width: 450px; display: flex; flex-direction: column; max-height: 85vh; text-align: center; }
-        .popup-title { color: #facc15; margin: 0 0 15px 0; font-size: 32px; font-weight: 900; text-align: center; letter-spacing: 2px;}
-        .popup-scroll { flex: 1; overflow-y: auto; padding-bottom: 10px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;}
+        .popup-title { color: #facc15; margin: 0 0 15px 0; font-size: 32px; font-weight: 900; text-align: center; letter-spacing: 2px; flex-shrink: 0;}
+        .popup-scroll { flex: 1; overflow-y: auto; padding-bottom: 10px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch;}
         .popup-inner { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
 
-        .chest-img { font-size: 100px; text-align: center; cursor: pointer; margin: 20px 0; }
+        .chest-img { font-size: 100px; text-align: center; cursor: pointer; margin: 20px 0; display: inline-block;}
         .opening { animation: shake 0.4s infinite; }
         @keyframes shake { 0%, 100% { transform: translate(1px, -1px) rotate(-2deg); } 50% { transform: translate(-1px, 2px) rotate(2deg); } }
 
@@ -131,19 +143,22 @@
             .modal-header .title { font-size: 28px; }
             .time-display { font-size: 42px; }
             .stats-text { font-size: 20px; }
-            .weapon-slot { width: 34px; height: 34px; font-size: 18px; }
+            .weapon-slot { width: 32px; height: 32px; font-size: 18px; }
             .weapon-slot .lvl-badge { font-size: 10px; }
+            .inv-row { width: 230px; }
+            .char-slot { width: 80px; height: 80px; font-size: 40px;}
         }
     </style>
 </head>
 <body>
 
+<div id="game-container">
     <!-- 🌟 專屬封面 Splash Screen -->
-    <div id="splash-screen" class="overlay" style="z-index: 50; pointer-events: auto; background: #0a0a0a; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;" onclick="enterTitle()">
-        <h1 class="mega-title">UNIVERSE<br>SURVIVORS</h1>
-        <h2 class="sub-title">宇宙倖存者</h2>
+    <div id="splash-screen" class="overlay center-layout" style="z-index: 50; pointer-events: auto; background: #0a0a0a;" onclick="enterTitle()">
+        <h1 class="mega-title">STELLAR<br>BREAKOUT</h1>
+        <h2 class="sub-title">星際突圍</h2>
         <div class="blinking-text">點擊螢幕啟動系統</div>
-        <div class="creator-text">製作人：指揮官 & Gemini</div>
+        <div class="creator-text">製作人：林小木</div>
     </div>
 
     <!-- 🎯 遊戲 HUD -->
@@ -177,26 +192,25 @@
     </div>
 
     <!-- 標題主選單 -->
-    <div id="title-screen" class="modal hidden" style="justify-content: center; align-items: center;">
+    <div id="title-screen" class="modal hidden center-layout">
         <div class="menu-coins-display">🪙 <span id="menu-coins">0</span></div>
-        <h1 class="mega-title">UNIVERSE<br>SURVIVORS</h1>
-        <h2 class="sub-title">宇宙倖存者</h2>
+        <h1 class="mega-title">STELLAR<br>BREAKOUT</h1>
+        <h2 class="sub-title">星際突圍</h2>
         <div class="main-menu-btns">
             <button class="btn-main btn-green-main" onclick="goToCharSelect()">開始出擊</button>
             <button class="btn-main btn-blue-main" onclick="goToShop()">科技樹升級</button>
             <button class="btn-main btn-brown-main" onclick="goToAchievements()">作戰紀錄</button>
         </div>
-        <div class="creator-text">製作人：指揮官 & Gemini</div>
+        <div class="creator-text">製作人：林小木</div>
     </div>
 
-    <!-- 🌟 選角介面 (經典不裁切) -->
+    <!-- 選角介面 -->
     <div id="char-select-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="backToMainMenu()">BACK</button>
             <div class="title">選擇駕駛員</div>
-            <div style="font-size: 18px; font-weight: bold; color: #e2e8f0;">🪙 <span id="char-menu-coins">0</span></div>
+            <div style="font-size: 16px; font-weight: bold; color: #facc15;">🪙 <span id="char-menu-coins">0</span></div>
         </div>
-        
         <div class="modal-content">
             <div class="char-details-container">
                 <div class="char-details-top">
@@ -211,10 +225,8 @@
                 </div>
                 <div class="char-stats-grid" id="char-stats"></div>
             </div>
-            
             <div class="char-grid-bottom" id="char-grid"></div>
         </div>
-
         <div class="modal-footer">
             <button class="btn-main btn-green-main" style="width:100%; max-width:400px; padding:15px; font-size:22px;" onclick="goToStageSelect()">確認</button>
         </div>
@@ -225,7 +237,7 @@
         <div class="modal-header">
             <button class="icon-btn" onclick="goToCharSelect()">BACK</button>
             <div class="title">選擇星域</div>
-            <div style="width: 60px;"></div>
+            <div style="width: 44px;"></div>
         </div>
         <div class="modal-content" id="stage-list"></div>
         <div class="modal-footer">
@@ -238,22 +250,22 @@
         <div class="modal-header">
             <button class="icon-btn" onclick="backToMainMenu()">BACK</button>
             <div class="title">作戰紀錄</div>
-            <div style="width: 60px;"></div>
+            <div style="width: 44px;"></div>
         </div>
-        <div class="modal-content" id="ach-list-container" style="padding-bottom: 30px;"></div>
+        <div class="modal-content no-footer" id="ach-list-container"></div>
     </div>
 
-    <!-- 商店系統 -->
+    <!-- 商店系統 (修復按鈕擠壓) -->
     <div id="shop-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="backToMainMenu()">BACK</button>
             <div class="title">科技樹升級</div>
-            <div style="font-size: 18px; font-weight: bold; color: #e2e8f0;">🪙 <span id="shop-coins-display">0</span></div>
+            <div style="font-size: 16px; font-weight: bold; color: #facc15;">🪙 <span id="shop-coins-display">0</span></div>
         </div>
-        <div class="modal-content" id="shop-items-container" style="padding-bottom: 30px;"></div>
+        <div class="modal-content no-footer" id="shop-items-container"></div>
     </div>
 
-    <!-- 🌟 升級彈窗 (防重疊設計) -->
+    <!-- 🌟 升級彈窗 (無殘留) -->
     <div id="level-up-modal" class="popup-overlay hidden">
         <div class="popup-box">
             <h1 class="popup-title">等級提升</h1>
@@ -305,290 +317,247 @@
     </div>
 
     <canvas id="gameCanvas"></canvas>
+</div>
 
-    <script>
-        document.addEventListener('gesturestart', e => e.preventDefault());
-        document.addEventListener('dblclick', e => e.preventDefault(), {passive:false});
-        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize); resize();
+<script>
+    // 🍏 防放大與基礎設定
+    document.addEventListener('gesturestart', e => e.preventDefault());
+    document.addEventListener('dblclick', e => e.preventDefault(), {passive:false});
+    const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
 
-        // 🎵 音效引擎 (Web Audio API)
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        let audioCtx;
-        function initAudio() { if(!audioCtx) { audioCtx = new AudioContext(); } if(audioCtx.state === 'suspended') { audioCtx.resume(); } }
-        function playTone(freq, type, duration, vol=0.1) {
-            if(!audioCtx) return;
-            try {
-                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-                osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(vol, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + duration);
-            } catch(e){}
+    // 🎵 音效引擎 (Web Audio API)
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+    function initAudio() { if(!audioCtx) { audioCtx = new AudioContext(); } if(audioCtx.state === 'suspended') { audioCtx.resume(); } }
+    function playTone(freq, type, duration, vol=0.1) {
+        if(!audioCtx) return;
+        try {
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            if(type === 'sawtooth') { osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration); }
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        } catch(e){}
+    }
+    function soundShoot() { playTone(800, 'square', 0.05, 0.02); }
+    function soundHit() { playTone(100, 'sawtooth', 0.05, 0.02); } 
+    function soundGem() { playTone(1200, 'sine', 0.08, 0.05); }
+    function soundClick() { playTone(600, 'sine', 0.1, 0.1); }
+    function soundDash() { // 空間摺疊專屬音效
+        if(!audioCtx) return;
+        try {
+            let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        } catch(e){}
+    }
+    function soundLevelUp() { if(!audioCtx) return; playTone(440, 'sine', 0.2, 0.1); setTimeout(()=>playTone(554, 'sine', 0.2, 0.1), 100); setTimeout(()=>playTone(659, 'sine', 0.4, 0.1), 200); }
+
+    let saveData = { coins: 0, upgrades: {}, achievements: [] };
+    try { let s = localStorage.getItem('stellarBreakoutSave_v11'); if(s){ let p=JSON.parse(s); saveData.coins=p.coins||0; saveData.upgrades=p.upgrades||{}; saveData.achievements=p.achievements||[]; } }catch(e){}
+    function saveGame() { localStorage.setItem('stellarBreakoutSave_v11', JSON.stringify(saveData)); updateMenuCoins(); }
+
+    let selectedCharIndex=0, selectedStageIndex=0, gameState='splash';
+    let worldX=0, worldY=0, score=0, frameCount=0, gameSeconds=0, collectedCoins=0;
+    let enemies=[], bullets=[], gems=[], coinsArr=[], floatTexts=[], particles=[], destructibles=[], consumables=[];
+    let destructiblesDestroyed=0, bossSpawned=false, currentBoss=null, screenShake=0, deathTimer=0, deathShockwaveRadius=0, deathFlashAlpha=0;
+    let globalDmgMult=1, globalCdMult=1, globalProjSpeedMult=1, globalAreaMult=1, globalDurationMult=1;
+    let player = { size:16, hp:0, maxHp:0, exp:0, maxExp:5, level:1, speed:4, angle:-Math.PI/2, lastFacingX:1, lastFacingY:0, damageFlash:0, weapons:{}, passives:{}, dashCd:0, isDashing:false, dashTimer:0, invincibleTimer:0 };
+    const MAP_LIMIT = 4000;
+
+    const ACHIEVEMENTS = [ { id:'survive_1m', title:'初見深淵', hint:'存活1分鐘', desc:'存活 1 分鐘', reward:'解鎖圖鑑', icon:'⏱️' }, { id:'kill_elite', title:'獵殺者', hint:'擊殺紅色菁英', desc:'擊殺一隻紅色菁英怪', reward:'500 金幣', icon:'👹' }, { id:'reach_lv10', title:'能量超載', hint:'達10級', desc:'等級達到 10', reward:'解鎖被動', icon:'🔋' }, { id:'destroy_20', title:'宇宙清道夫', hint:'破壞箱子', desc:'破壞 20 個儲存艙', reward:'解鎖武器', icon:'📦' }, { id:'evolve_weapon', title:'突破極限', hint:'進化武器', desc:'進化任意武器', reward:'解鎖新角色', icon:'✨' }, { id:'survive_5m', title:'直視巨物', hint:'存活5分', desc:'存活至 05:00', reward:'解鎖新星域', icon:'👁️' } ];
+    const WEAPON_DB = {
+        blaster: { name:'前鋒機砲', icon:'🔫', maxLevel:8, evoReq:'cooldown', evoName:'裂空者', evoIcon:'🌠', desc:['發射彈道','額外1個','傷害提高','額外1個','傷害提高','速度加快','穿透','冷卻縮短'] },
+        laser: { name:'脈衝雷射', icon:'⚡', maxLevel:8, evoReq:'damage', evoName:'天罰陣列', evoIcon:'🛰️', desc:['鎖定最近','傷害提高','冷卻縮短','傷害提高','速度加快','冷卻縮短','傷害提高','極速掃射'] },
+        drone: { name:'護衛無人機', icon:'🛸', maxLevel:8, evoReq:'proj_speed', evoName:'星塵結界', evoIcon:'💫', desc:['環繞機體','傷害提高','額外1台','速度提高','範圍擴大','額外1台','傷害提高','終極防禦'] },
+        plasma: { name:'電漿爆破', icon:'🔮', maxLevel:8, evoReq:'area', evoName:'超新星', evoIcon:'🌌', desc:['發射爆炸球','範圍擴大','額外1個','傷害提高','冷卻縮短','額外1個','範圍擴大','牽引黑洞'] },
+        aura: { name:'輻射力場', icon:'🌀', maxLevel:8, evoReq:'magnet', evoName:'絕對領域', evoIcon:'💠', desc:['近身傷害','範圍擴大','頻率加快','傷害提高','範圍擴大','頻率加快','傷害提高','絞肉機'] },
+        bomb: { name:'櫻桃炸彈', icon:'🍒', maxLevel:8, evoReq:'hp', evoName:'核聚變彈', evoIcon:'☢️', desc:['投擲炸彈','範圍擴大','冷卻縮短','額外1個','傷害提高','範圍擴大','額外1個','核爆'] },
+        blade: { name:'光束斬艦刀', icon:'🗡️', maxLevel:8, evoReq:'regen', evoName:'等離子光劍', evoIcon:'⚔️', desc:['揮出光刃','傷害提高','範圍擴大','冷卻縮短','傷害提高','範圍擴大','冷卻縮短','巨型光劍'] },
+        mine: { name:'定時機雷', icon:'💣', maxLevel:8, evoReq:'duration', evoName:'反物質地雷', evoIcon:'💥', desc:['原地布雷','傷害提高','額外1個','範圍擴大','傷害提高','冷卻縮短','範圍擴大','連鎖毀滅'] }
+    };
+    const PASSIVE_DB = { cooldown: {name:'冷卻核心',icon:'❄️',maxLevel:5,desc:'冷卻縮短8%'}, damage: {name:'高能晶片',icon:'🔥',maxLevel:5,desc:'傷害提高10%'}, proj_speed: {name:'超導軌道',icon:'🛤️',maxLevel:5,desc:'速度加快10%'}, area: {name:'廣域雷達',icon:'📡',maxLevel:5,desc:'範圍擴大10%'}, magnet: {name:'牽引網',icon:'🧲',maxLevel:5,desc:'拾取範圍25%'}, hp: {name:'裝甲塗層',icon:'🛡️',maxLevel:5,desc:'最大生命20%'}, regen: {name:'奈米修復',icon:'🩹',maxLevel:5,desc:'5秒恢復1生命'}, duration: {name:'持久電池',icon:'🔋',maxLevel:5,desc:'持續延長15%'} };
+    const CHARACTERS = [ { id:'ranger', name:'安東尼奧', icon:'🧑‍🚀', hp:100, speed:4.0, damage:1.0, weapon:'blaster', desc:'標準戰機。每 10 級提升 10% 傷害。' }, { id:'heavy', name:'格羅克', icon:'🦍', hp:180, speed:3.0, damage:0.8, weapon:'drone', desc:'重裝坦克。高血量，緩慢。' }, { id:'scout', name:'艾莉亞', icon:'🧝‍♀️', hp:70, speed:5.5, damage:0.9, weapon:'laser', desc:'輕型飛翼。高機動性。' }, { id:'engineer', name:'C-137', icon:'🤖', hp:120, speed:3.8, damage:1.0, weapon:'mine', desc:'維修圓盤。武器持續時間+20%。' }, { id:'ghost', name:'澤拉圖', icon:'👽', hp:80, speed:4.8, damage:1.2, weapon:'blade', desc:'隱形機。高傷害。' }, { id:'scavenger', name:'火箭', icon:'🦝', hp:90, speed:4.5, damage:1.0, weapon:'bomb', desc:'回收船。極大拾取範圍。' } ];
+    const STAGES = [ { id:'gargantua', name:'卡岡都亞星域', desc:'深空戰場。無邊無際的虛空。<br>難度：★☆☆', locked:false, bgHue:280 }, { id:'dyson', name:'廢棄戴森球', desc:'金屬迷宮。充滿了障礙物。<br>解鎖條件：見證星噬者', locked:true, bgHue:200 } ];
+    const shopConfig = { hp:{name:'裝甲塗層',desc:'最大生命+10',baseCost:50,maxLevel:5}, speed:{name:'推進器',desc:'移動速度+5%',baseCost:80,maxLevel:5}, damage:{name:'火控晶片',desc:'基礎傷害+5%',baseCost:100,maxLevel:5}, magnet:{name:'重力磁鐵',desc:'拾取範圍+10%',baseCost:60,maxLevel:5} };
+
+    // === UI 邏輯 ===
+    function safeUpdate(id,html) { let e=document.getElementById(id); if(e) e.innerHTML=html; }
+    function setHudVisible(v) { document.getElementById('game-ui').style.display = v ? 'flex' : 'none'; }
+    function hideAllModals() { document.querySelectorAll('.modal, .popup-overlay').forEach(m=>m.classList.add('hidden')); document.getElementById('splash-screen').classList.add('hidden'); document.getElementById('radiation-warning').style.display='none'; }
+    
+    function enterTitle() { initAudio(); soundClick(); hideAllModals(); document.getElementById('title-screen').classList.remove('hidden'); gameState='menu'; updateMenuCoins(); }
+    function backToMainMenu() { soundClick(); enterTitle(); }
+    function goToShop() { soundClick(); hideAllModals(); document.getElementById('shop-menu').classList.remove('hidden'); gameState='shop'; renderShop(); }
+    function goToAchievements() { soundClick(); hideAllModals(); document.getElementById('achievements-menu').classList.remove('hidden'); let c=document.getElementById('ach-list-container'); c.innerHTML=''; ACHIEVEMENTS.forEach(a=>{ let u=saveData.achievements&&saveData.achievements.includes(a.id); let d=document.createElement('div'); d.className=`list-card ach-item ${u?'unlocked':''}`; d.innerHTML=u?`<div class="card-icon-box" style="border:none; background:transparent; font-size:32px;">${a.icon}</div><div class="card-content"><div class="card-title-row"><h3>${a.title}</h3></div><p class="card-desc">${a.desc}</p><p style="color:#facc15; font-size:11px; margin-top:6px; font-weight:bold;">獎勵: ${a.reward}</p></div>`:`<div class="card-icon-box" style="border:none; background:transparent; font-size:32px;">❓</div><div class="card-content"><div class="card-title-row"><h3>未解鎖</h3></div><p class="card-desc">「${a.hint}」</p></div>`; c.appendChild(d); }); }
+    function goToCharSelect() { soundClick(); hideAllModals(); document.getElementById('char-select-menu').classList.remove('hidden'); gameState='char_select'; renderCharSelect(); }
+    function goToStageSelect() { soundClick(); hideAllModals(); if(saveData.achievements&&saveData.achievements.includes('survive_5m')){STAGES[1].locked=false;STAGES[1].desc='難度：★★☆';} document.getElementById('stage-select-menu').classList.remove('hidden'); gameState='stage_select'; renderStageSelect(); }
+    function updateMenuCoins() { safeUpdate('menu-coins',saveData.coins); safeUpdate('shop-coins-display',saveData.coins); safeUpdate('char-menu-coins',saveData.coins); safeUpdate('ingame-coin-display',collectedCoins); }
+    
+    function renderCharSelect() { 
+        let g=document.getElementById('char-grid'); g.innerHTML=''; 
+        CHARACTERS.forEach((c,i)=>{ let d=document.createElement('div'); d.className=`char-slot ${i===selectedCharIndex?'selected':''}`; d.innerText=c.icon; d.onclick=()=>{soundClick();selectedCharIndex=i;renderCharSelect();}; g.appendChild(d); }); 
+        let c=CHARACTERS[selectedCharIndex]; safeUpdate('char-name',c.name); safeUpdate('char-sprite-display',c.icon); safeUpdate('char-weapon',WEAPON_DB[c.weapon].name); safeUpdate('char-desc',c.desc); 
+        safeUpdate('char-stats',`<div class="stat-item-row"><span class="stat-label">最大生命</span><span class="stat-value">${c.hp} <span class="bonus">+${(saveData.upgrades.hp||0)*10}</span></span></div><div class="stat-item-row"><span class="stat-label">恢復</span><span class="stat-value">0</span></div><div class="stat-item-row"><span class="stat-label">裝甲</span><span class="stat-value">0</span></div><div class="stat-item-row"><span class="stat-label">移動速度</span><span class="stat-value">${c.speed.toFixed(1)} <span class="bonus">+${(saveData.upgrades.speed||0)*5}%</span></span></div><div class="stat-item-row"><span class="stat-label">力量</span><span class="stat-value">+${Math.round((c.damage-1)*100)}% <span class="bonus">+${(saveData.upgrades.damage||0)*5}%</span></span></div><div class="stat-item-row"><span class="stat-label">範圍</span><span class="stat-value">100%</span></div><div class="stat-item-row"><span class="stat-label">速度</span><span class="stat-value">100%</span></div><div class="stat-item-row"><span class="stat-label">持續時間</span><span class="stat-value">100%</span></div><div class="stat-item-row"><span class="stat-label">數量</span><span class="stat-value">0</span></div><div class="stat-item-row"><span class="stat-label">冷卻時間</span><span class="stat-value">-0%</span></div><div class="stat-item-row"><span class="stat-label">磁鐵</span><span class="stat-value">100 <span class="bonus">+${(saveData.upgrades.magnet||0)*10}%</span></span></div><div class="stat-item-row"><span class="stat-label">幸運</span><span class="stat-value">0%</span></div>`); 
+        updateMenuCoins(); 
+    }
+    function renderStageSelect() { let l=document.getElementById('stage-list'); l.innerHTML=''; STAGES.forEach((s,i)=>{ let d=document.createElement('div'); d.className=`list-card stage-card ${i===selectedStageIndex?'selected':''} ${s.locked?'locked':''}`; d.innerHTML=`<h3>${s.name}</h3><p>${s.desc}</p>`; if(!s.locked)d.onclick=()=>{soundClick();selectedStageIndex=i;renderStageSelect();}; l.appendChild(d); }); }
+    function renderShop() { let c=document.getElementById('shop-items-container'); c.innerHTML=''; for(let k in shopConfig){ let i=shopConfig[k], lv=saveData.upgrades[k]||0, cost=i.baseCost*(lv+1), max=lv>=i.maxLevel; let d=document.createElement('div'); d.className='list-card clickable'; d.innerHTML=`<div class="card-icon-box" style="border:none; background:transparent;">⚙️</div><div class="card-content"><div class="card-title-row"><h3>${i.name}</h3><span class="card-tag" style="color:#94a3b8">Lv.${lv}/${i.maxLevel}</span></div><p class="card-desc">${i.desc}</p></div><button class="btn-buy" ${max||saveData.coins<cost?'disabled':''} onclick="event.stopPropagation(); buyUpgrade('${k}',${cost})">${max?'MAX':`💰 ${cost}`}</button>`; c.appendChild(d); } updateMenuCoins(); }
+    function buyUpgrade(k,c) { soundLevelUp(); if(saveData.coins>=c){saveData.coins-=c;saveData.upgrades[k]=(saveData.upgrades[k]||0)+1;saveGame();renderShop();} }
+    function checkAchievement(id) { if(!saveData.achievements)saveData.achievements=[]; if(!saveData.achievements.includes(id)){ saveData.achievements.push(id); if(id==='kill_elite')saveData.coins+=500; saveGame(); let a=ACHIEVEMENTS.find(x=>x.id===id); if(a){soundLevelUp(); safeUpdate('ach-popup-title',a.title); let p = document.getElementById('achievement-popup'); p.style.display='flex'; setTimeout(()=>{p.style.display='none';},3500);} } }
+    function calcStats() { let c=CHARACTERS[selectedCharIndex]; globalDmgMult=c.damage+(saveData.upgrades.damage||0)*0.05; globalCdMult=1; globalProjSpeedMult=1; globalAreaMult=1; globalDurationMult=1; if(player.passives.damage)globalDmgMult+=player.passives.damage.level*0.1; if(player.passives.cooldown)globalCdMult-=player.passives.cooldown.level*0.08; if(player.passives.proj_speed)globalProjSpeedMult+=player.passives.proj_speed.level*0.1; if(player.passives.area)globalAreaMult+=player.passives.area.level*0.1; if(player.passives.duration)globalDurationMult+=player.passives.duration.level*0.15; player.pickupRadius=100*(1+(saveData.upgrades.magnet||0)*0.1); if(player.passives.magnet)player.pickupRadius*=(1+player.passives.magnet.level*0.25); globalCdMult=Math.max(0.1,globalCdMult); if(c.id==='ranger')globalDmgMult+=Math.floor(player.level/10)*0.1; if(c.id==='engineer')globalDurationMult+=0.2; if(c.id==='scavenger')player.pickupRadius+=50; }
+    
+    function updateInventoryUI() { let f=(rId,src, isP)=>{ let r=document.getElementById(rId); if(!r)return; r.innerHTML=''; for(let i=0;i<6;i++){ let ks=Object.keys(src), d=document.createElement('div'); if(i<ks.length){ let id=ks[i], w=src[id], db=isP?PASSIVE_DB[id]:WEAPON_DB[id]; d.className=`weapon-slot ${w.isEvolved?'evolved':''} ${isP?'passive':''}`; d.innerHTML=`${db.icon}<div class="lvl-badge">${w.isEvolved?'M':w.level}</div>`; }else{ d.className=`weapon-slot empty ${isP?'passive':''}`; } r.appendChild(d); } }; f('weapon-row',player.weapons, false); f('passive-row',player.passives, true); f('pause-weapon-row',player.weapons, false); f('pause-passive-row',player.passives, true); }
+    function acquireWeapon(id) { if(id==='blaster')player.weapons.blaster={level:1,baseDamage:15,baseCooldown:40,baseSpeed:14,count:1,timer:0,isEvolved:false}; if(id==='laser')player.weapons.laser={level:1,baseDamage:10,baseCooldown:50,baseSpeed:15,timer:0,isEvolved:false}; if(id==='drone')player.weapons.drone={level:1,baseDamage:10,count:2,baseRadius:50,baseSpeed:0.05,isEvolved:false}; if(id==='plasma')player.weapons.plasma={level:1,baseDamage:20,baseCooldown:80,baseSpeed:5,count:2,baseAoe:30,timer:0,isEvolved:false}; if(id==='aura')player.weapons.aura={level:1,baseDamage:6,baseRadius:35,baseTickRate:20,timer:0,isEvolved:false}; if(id==='bomb')player.weapons.bomb={level:1,baseDamage:25,baseCooldown:100,baseSpeed:6,count:1,baseAoe:50,timer:0,isEvolved:false}; if(id==='blade')player.weapons.blade={level:1,baseDamage:18,baseCooldown:60,baseSpeed:8,count:1,baseAoe:40,timer:0,isEvolved:false}; if(id==='mine')player.weapons.mine={level:1,baseDamage:35,baseCooldown:90,count:1,baseAoe:50,timer:0,isEvolved:false}; updateInventoryUI(); calcStats(); }
+    function upgradeWeapon(id) { let w=player.weapons[id]; w.level++; if(id==='blaster'){if(w.level===2)w.count=2;if(w.level===3)w.baseDamage+=4;if(w.level===4)w.count=3;if(w.level===5)w.baseDamage+=5;if(w.level===6)w.baseSpeed+=3;if(w.level===7)w.baseDamage+=6;if(w.level===8)w.baseCooldown-=10;} if(id==='laser'){if(w.level===2)w.baseDamage+=3;if(w.level===3)w.baseCooldown-=5;if(w.level===4)w.baseDamage+=4;if(w.level===5)w.baseSpeed+=2;if(w.level===6)w.baseCooldown-=5;if(w.level===7)w.baseDamage+=5;if(w.level===8)w.baseCooldown-=10;} if(id==='drone'){if(w.level===2)w.baseDamage+=2;if(w.level===3)w.count=3;if(w.level===4)w.baseSpeed+=0.02;if(w.level===5)w.baseRadius+=10;if(w.level===6)w.count=4;if(w.level===7)w.baseDamage+=3;if(w.level===8)w.count=5;} if(id==='plasma'){if(w.level===2)w.baseAoe+=10;if(w.level===3)w.count=3;if(w.level===4)w.baseDamage+=5;if(w.level===5)w.baseCooldown-=10;if(w.level===6)w.count=4;if(w.level===7)w.baseAoe+=10;if(w.level===8)w.baseCooldown-=15;} if(id==='aura'){if(w.level===2)w.baseRadius+=10;if(w.level===3)w.baseTickRate-=5;if(w.level===4)w.baseDamage+=2;if(w.level===5)w.baseRadius+=10;if(w.level===6)w.baseTickRate-=5;if(w.level===7)w.baseDamage+=2;if(w.level===8)w.baseRadius+=15;} if(id==='bomb'){if(w.level===2)w.baseAoe+=10;if(w.level===3)w.baseCooldown-=10;if(w.level===4)w.count=2;if(w.level===5)w.baseDamage+=10;if(w.level===6)w.baseAoe+=15;if(w.level===7)w.count=3;if(w.level===8)w.baseCooldown-=15;} if(id==='blade'){if(w.level===2)w.baseDamage+=5;if(w.level===3)w.baseAoe+=10;if(w.level===4)w.baseCooldown-=5;if(w.level===5)w.baseDamage+=5;if(w.level===6)w.baseAoe+=15;if(w.level===7)w.baseCooldown-=5;if(w.level===8)w.baseDamage+=10;} if(id==='mine'){if(w.level===2)w.baseDamage+=10;if(w.level===3)w.count=2;if(w.level===4)w.baseAoe+=10;if(w.level===5)w.baseDamage+=10;if(w.level===6)w.baseCooldown-=10;if(w.level===7)w.baseAoe+=15;if(w.level===8)w.count=3;} updateInventoryUI(); }
+    function evolveWeapon(id) { let w=player.weapons[id]; w.isEvolved=true; if(id==='blaster'){w.count=5;w.baseCooldown=15;w.baseDamage*=1.2;w.baseSpeed=20;} if(id==='laser'){w.baseCooldown=20;w.baseDamage*=1.5;w.baseAoe=50;} if(id==='drone'){w.count=8;w.baseSpeed=0.15;w.baseRadius=80;w.baseDamage*=1.5;} if(id==='plasma'){w.count=1;w.baseCooldown=120;w.baseSpeed=2;w.baseAoe=120;w.baseDamage*=3;} if(id==='aura'){w.baseTickRate=12;w.baseRadius=70;w.baseDamage*=1.5;} if(id==='bomb'){w.count=1;w.baseCooldown=200;w.baseAoe=180;w.baseDamage*=5;} if(id==='blade'){w.baseCooldown=30;w.baseAoe=90;w.baseDamage*=2;w.baseSpeed=12;} if(id==='mine'){w.count=2;w.baseCooldown=60;w.baseAoe=120;w.baseDamage*=3;} updateInventoryUI(); checkAchievement('evolve_weapon'); }
+    function acquirePassive(id) { player.passives[id]={level:1}; updateInventoryUI(); calcStats(); }
+    function upgradePassive(id) { player.passives[id].level++; updateInventoryUI(); calcStats(); }
+
+    let joystickTouchId=null, isTouching=false, joystickOrigin=null, joystickCurrent=null, touchVector={x:0,y:0};
+    canvas.addEventListener('touchstart',e=>{e.preventDefault();if(joystickTouchId!==null)return;let t=e.changedTouches[0];joystickTouchId=t.identifier;joystickOrigin={x:t.clientX,y:t.clientY};joystickCurrent={x:t.clientX,y:t.clientY};isTouching=true;touchVector={x:0,y:0};},{passive:false});
+    canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!isTouching||joystickTouchId===null)return;let t=null;for(let i=0;i<e.touches.length;i++){if(e.touches[i].identifier===joystickTouchId){t=e.touches[i];break;}}if(!t)return;joystickCurrent={x:t.clientX,y:t.clientY};let d=Math.hypot(joystickCurrent.x-joystickOrigin.x,joystickCurrent.y-joystickOrigin.y);if(d>5){touchVector.x=(joystickCurrent.x-joystickOrigin.x)/d;touchVector.y=(joystickCurrent.y-joystickOrigin.y)/d;}},{passive:false});
+    function handleTE(e){e.preventDefault();if(joystickTouchId===null)return;let L=false;for(let i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===joystickTouchId){L=true;break;}}if(L){isTouching=false;joystickOrigin=null;joystickCurrent=null;touchVector={x:0,y:0};joystickTouchId=null;}}
+    canvas.addEventListener('touchend',handleTE,{passive:false}); canvas.addEventListener('touchcancel',handleTE,{passive:false});
+
+    // 🔄 升級排隊系統 (防畫面殘留與吃次數)
+    let pendingLevelUps = 0;
+    function processNextLevelUp() {
+        if (pendingLevelUps > 0) {
+            pendingLevelUps--;
+            triggerLevelUpModal();
+        } else {
+            setHudVisible(true);
+            gameState = 'playing';
         }
-        function soundShoot() { playTone(600, 'square', 0.05, 0.03); }
-        function soundHit() { playTone(150, 'sawtooth', 0.08, 0.05); }
-        function soundGem() { playTone(1200, 'sine', 0.08, 0.05); }
-        function soundClick() { playTone(800, 'sine', 0.1, 0.1); }
-        function soundLevelUp() { if(!audioCtx) return; playTone(440, 'sine', 0.2, 0.1); setTimeout(()=>playTone(554, 'sine', 0.2, 0.1), 100); setTimeout(()=>playTone(659, 'sine', 0.4, 0.1), 200); }
+    }
 
-        // 🛡️ 存檔系統
-        let saveData = { coins: 0, upgrades: {}, achievements: [] };
-        try { let s = localStorage.getItem('uniSurvSave_v10'); if(s){ let p=JSON.parse(s); saveData.coins=p.coins||0; saveData.upgrades=p.upgrades||{}; saveData.achievements=p.achievements||[]; } }catch(e){}
-        function saveGame() { localStorage.setItem('uniSurvSave_v10', JSON.stringify(saveData)); updateMenuCoins(); }
+    function startGame() { soundClick(); hideAllModals(); let c=CHARACTERS[selectedCharIndex]; player={size:16,speed:c.speed+(saveData.upgrades.speed||0)*0.5,hp:c.hp+(saveData.upgrades.hp||0)*10,maxHp:c.hp+(saveData.upgrades.hp||0)*10,exp:0,maxExp:5,level:1,angle:-Math.PI/2,lastFacingX:1,lastFacingY:0,damageFlash:0,weapons:{},passives:{},dashCd:0,isDashing:false,dashTimer:0,invincibleTimer:0}; calcStats(); acquireWeapon(c.weapon); worldX=0;worldY=0;score=0;frameCount=0;gameSeconds=0;collectedCoins=0;screenShake=0;deathTimer=0; pendingLevelUps=0; enemies=[];bullets=[];gems=[];coinsArr=[];floatTexts=[];particles=[];destructibles=[];consumables=[]; destructiblesDestroyed=0;bossSpawned=false;currentBoss=null;joystickTouchId=null;isTouching=false;touchVector={x:0,y:0}; document.getElementById('game-ui').classList.remove('hidden'); document.getElementById('exp-fill').style.width='0%'; safeUpdate('level-display','1'); safeUpdate('score-display','0'); safeUpdate('time-display','00:00'); document.getElementById('dash-btn').classList.remove('cooldown'); updateMenuCoins(); updateInventoryUI(); setHudVisible(true); gameState='playing'; }
+    function gameOver(v=false) { playTone(100, 'sawtooth', 1.0, 0.2); gameState='gameover'; setHudVisible(false); let t=document.getElementById('game-over-title'); if(v){t.innerText='任務完成';t.style.color='#facc15';}else{t.innerText='訊號中斷';t.style.color='#f87171';} safeUpdate('final-level',player.level); safeUpdate('final-score',score); safeUpdate('final-time',`${String(Math.floor(gameSeconds/60)).padStart(2,'0')}:${String(gameSeconds%60).padStart(2,'0')}`); safeUpdate('final-coins',collectedCoins); saveData.coins+=collectedCoins; saveGame(); document.getElementById('game-over-modal').classList.remove('hidden'); }
+    function togglePause() { soundClick(); if(gameState==='playing'){gameState='paused'; setHudVisible(false); document.getElementById('pause-modal').classList.remove('hidden');} }
+    function resumeFromPause() { soundClick(); gameState='playing'; document.getElementById('pause-modal').classList.add('hidden'); setHudVisible(true); }
+    function quitToMenu() { soundClick(); saveData.coins+=collectedCoins; saveGame(); setHudVisible(false); enterTitle(); }
+    let dashRequested=false; function triggerDash() { if(player.dashCd<=0&&gameState==='playing')dashRequested=true; }
 
-        let selectedCharIndex=0, selectedStageIndex=0, gameState='splash';
-        let worldX=0, worldY=0, score=0, frameCount=0, gameSeconds=0, collectedCoins=0;
-        let enemies=[], bullets=[], gems=[], coinsArr=[], floatTexts=[], particles=[], destructibles=[], consumables=[];
-        let destructiblesDestroyed=0, bossSpawned=false, currentBoss=null, screenShake=0, deathTimer=0, deathShockwaveRadius=0, deathFlashAlpha=0;
-        let globalDmgMult=1, globalCdMult=1, globalProjSpeedMult=1, globalAreaMult=1, globalDurationMult=1;
-        let player = { size:16, hp:0, maxHp:0, exp:0, maxExp:5, level:1, speed:4, angle:-Math.PI/2, lastFacingX:1, lastFacingY:0, damageFlash:0, weapons:{}, passives:{}, dashCd:0, isDashing:false, dashTimer:0, invincibleTimer:0 };
-        const MAP_LIMIT = 4000;
+    const stars=[], nebulas=[]; for(let i=0;i<200;i++)stars.push({x:Math.random()*3000,y:Math.random()*3000,size:Math.random()*1.5+0.5,depth:Math.random()*0.4+0.1}); for(let i=0;i<8;i++)nebulas.push({x:Math.random()*4000,y:Math.random()*4000,radius:400+Math.random()*600,hue:Math.random()*360,depth:0.02});
+    const keys={}; window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys[e.code]=true;if(e.code==='Escape'||e.code==='KeyP')togglePause();if(e.code==='Space')triggerDash();}); window.addEventListener('keyup',e=>keys[e.code]=false);
 
-        const ACHIEVEMENTS = [ { id:'survive_1m', title:'初見深淵', hint:'存活1分鐘', desc:'存活 1 分鐘', reward:'解鎖圖鑑', icon:'⏱️' }, { id:'kill_elite', title:'獵殺者', hint:'擊殺紅色菁英', desc:'擊殺一隻紅色菁英怪', reward:'500 金幣', icon:'👹' }, { id:'reach_lv10', title:'能量超載', hint:'達10級', desc:'等級達到 10', reward:'解鎖被動', icon:'🔋' }, { id:'destroy_20', title:'宇宙清道夫', hint:'破壞箱子', desc:'破壞 20 個儲存艙', reward:'解鎖武器', icon:'📦' }, { id:'evolve_weapon', title:'突破極限', hint:'進化武器', desc:'進化任意武器', reward:'解鎖新角色', icon:'✨' }, { id:'survive_5m', title:'直視巨物', hint:'存活5分', desc:'存活至 05:00', reward:'解鎖新星域', icon:'👁️' } ];
-        const WEAPON_DB = {
-            blaster: { name:'前鋒機砲', icon:'🔫', maxLevel:8, evoReq:'cooldown', evoName:'裂空者', evoIcon:'🌠', desc:['發射彈道','額外1個','傷害提高','額外1個','傷害提高','速度加快','穿透','冷卻縮短'] },
-            laser: { name:'脈衝雷射', icon:'⚡', maxLevel:8, evoReq:'damage', evoName:'天罰陣列', evoIcon:'🛰️', desc:['鎖定最近','傷害提高','冷卻縮短','傷害提高','速度加快','冷卻縮短','傷害提高','極速掃射'] },
-            drone: { name:'護衛無人機', icon:'🛸', maxLevel:8, evoReq:'proj_speed', evoName:'星塵結界', evoIcon:'💫', desc:['環繞機體','傷害提高','額外1台','速度提高','範圍擴大','額外1台','傷害提高','終極防禦'] },
-            plasma: { name:'電漿爆破', icon:'🔮', maxLevel:8, evoReq:'area', evoName:'超新星', evoIcon:'🌌', desc:['發射爆炸球','範圍擴大','額外1個','傷害提高','冷卻縮短','額外1個','範圍擴大','牽引黑洞'] },
-            aura: { name:'輻射力場', icon:'🌀', maxLevel:8, evoReq:'magnet', evoName:'絕對領域', evoIcon:'💠', desc:['近身傷害','範圍擴大','頻率加快','傷害提高','範圍擴大','頻率加快','傷害提高','絞肉機'] },
-            bomb: { name:'櫻桃炸彈', icon:'🍒', maxLevel:8, evoReq:'hp', evoName:'核聚變彈', evoIcon:'☢️', desc:['投擲炸彈','範圍擴大','冷卻縮短','額外1個','傷害提高','範圍擴大','額外1個','核爆'] },
-            blade: { name:'光束斬艦刀', icon:'🗡️', maxLevel:8, evoReq:'regen', evoName:'等離子光劍', evoIcon:'⚔️', desc:['揮出光刃','傷害提高','範圍擴大','冷卻縮短','傷害提高','範圍擴大','冷卻縮短','巨型光劍'] },
-            mine: { name:'定時機雷', icon:'💣', maxLevel:8, evoReq:'duration', evoName:'反物質地雷', evoIcon:'💥', desc:['原地布雷','傷害提高','額外1個','範圍擴大','傷害提高','冷卻縮短','範圍擴大','連鎖毀滅'] }
-        };
-        const PASSIVE_DB = { cooldown: {name:'冷卻核心',icon:'❄️',maxLevel:5,desc:'冷卻縮短8%'}, damage: {name:'高能晶片',icon:'🔥',maxLevel:5,desc:'傷害提高10%'}, proj_speed: {name:'超導軌道',icon:'🛤️',maxLevel:5,desc:'速度加快10%'}, area: {name:'廣域雷達',icon:'📡',maxLevel:5,desc:'範圍擴大10%'}, magnet: {name:'牽引網',icon:'🧲',maxLevel:5,desc:'拾取範圍25%'}, hp: {name:'裝甲塗層',icon:'🛡️',maxLevel:5,desc:'最大生命20%'}, regen: {name:'奈米修復',icon:'🩹',maxLevel:5,desc:'5秒恢復1生命'}, duration: {name:'持久電池',icon:'🔋',maxLevel:5,desc:'持續延長15%'} };
-        const CHARACTERS = [ { id:'ranger', name:'安東尼奧', icon:'🧑‍🚀', hp:100, speed:4.0, damage:1.0, weapon:'blaster', desc:'標準戰機。每 10 級提升 10% 傷害。' }, { id:'heavy', name:'格羅克', icon:'🦍', hp:180, speed:3.0, damage:0.8, weapon:'drone', desc:'重裝坦克。高血量，緩慢。' }, { id:'scout', name:'艾莉亞', icon:'🧝‍♀️', hp:70, speed:5.5, damage:0.9, weapon:'laser', desc:'輕型飛翼。高機動性。' }, { id:'engineer', name:'C-137', icon:'🤖', hp:120, speed:3.8, damage:1.0, weapon:'mine', desc:'維修圓盤。武器持續時間+20%。' }, { id:'ghost', name:'澤拉圖', icon:'👽', hp:80, speed:4.8, damage:1.2, weapon:'blade', desc:'隱形機。高傷害。' }, { id:'scavenger', name:'火箭', icon:'🦝', hp:90, speed:4.5, damage:1.0, weapon:'bomb', desc:'回收船。極大拾取範圍。' } ];
-        const STAGES = [ { id:'gargantua', name:'卡岡都亞星域', desc:'深空戰場。無邊無際的虛空。<br>難度：★☆☆', locked:false, bgHue:280 }, { id:'dyson', name:'廢棄戴森球', desc:'金屬迷宮。充滿了障礙物。<br>解鎖條件：見證星噬者', locked:true, bgHue:200 } ];
-        const shopConfig = { hp:{name:'裝甲塗層',desc:'最大生命+10',baseCost:50,maxLevel:5}, speed:{name:'推進器',desc:'移動速度+5%',baseCost:80,maxLevel:5}, damage:{name:'火控晶片',desc:'基礎傷害+5%',baseCost:100,maxLevel:5}, magnet:{name:'重力磁鐵',desc:'拾取範圍+10%',baseCost:60,maxLevel:5} };
+    function getScreenPos(wx,wy) { return {x:wx-worldX+canvas.width/2,y:wy-worldY+canvas.height/2}; }
+    function spawnEnemyBatch() {
+        if(enemies.length>800||bossSpawned)return;
+        let wm=Math.floor(gameSeconds/30), hpSc=1+wm*0.8+Math.pow(wm,2)*0.4, count=15+Math.floor(gameSeconds/5)*5; 
+        let isS=(gameSeconds%60>=45); if(isS)count*=3; let radB=Math.max(canvas.width,canvas.height)/2+50;
+        for(let i=0;i<count;i++){
+            let ty='minion'; if(wm>=1&&Math.random()<0.15)ty='splitter'; if(wm>=3&&Math.random()<0.2+(wm*0.03))ty='tank'; if(wm>=4&&Math.random()<0.1)ty='charger'; if(gameSeconds>0&&gameSeconds%30===0&&i===0)ty='elite';
+            let sz,sp,hp,col,vc,kbR, spSc=1+wm*0.05;
+            if(ty==='elite'){sz=35+Math.random()*10;sp=0.9*spSc;hp=250*hpSc;col='#9f1239';vc=4;kbR=0.1;} else if(ty==='tank'){sz=25+Math.random()*5;sp=0.6*spSc;hp=80*hpSc;col='#4c1d95';vc=6;kbR=0.15;} else if(ty==='charger'){sz=15+Math.random()*3;sp=2.5*spSc;hp=15*hpSc;col='#fbbf24';vc=3;kbR=0.5;} else if(ty==='splitter'){sz=18+Math.random()*4;sp=1.4*spSc;hp=15*hpSc;col='#ea580c';vc=5;kbR=0.7;} else{sz=12+Math.random()*3;sp=(isS?1.8:1.1)*spSc+Math.random()*0.3;hp=(isS?4:8)*hpSc;col=isS?'#3b82f6':'#1e293b';vc=4;kbR=0.9;}
+            let v=[]; for(let j=0;j<vc;j++)v.push({a:(j/vc)*Math.PI*2,r:0.7+Math.random()*0.6});
+            let a=Math.random()*Math.PI*2, sx,sy;
+            if(isS){ let side=Math.floor(gameSeconds/5)%4; if(side===0){sx=worldX+(Math.random()-0.5)*canvas.width;sy=worldY-radB;} if(side===1){sx=worldX+radB;sy=worldY+(Math.random()-0.5)*canvas.height;} if(side===2){sx=worldX+(Math.random()-0.5)*canvas.width;sy=worldY+radB;} if(side===3){sx=worldX-radB;sy=worldY+(Math.random()-0.5)*canvas.height;} }
+            else { let dR=radB+Math.random()*200; sx=worldX+Math.cos(a)*dR; sy=worldY+Math.sin(a)*dR; }
+            enemies.push({type:ty,isBoss:false,x:sx,y:sy,size:sz,speed:sp,hp:hp,maxHp:hp,angle:0,rotSpeed:(Math.random()-0.5)*0.05,vertices:v,knockbackX:0,knockbackY:0,damageFlash:0,color:col,kbResist:kbR,actionTimer:0,droneCd:0});
+        }
+    }
+    function spawnLeviathan() { enemies=[]; let sr=Math.max(canvas.width,canvas.height)/2+100, v=[]; for(let i=0;i<12;i++)v.push({a:(i/12)*Math.PI*2,r:i%2===0?1:0.6}); currentBoss={type:'leviathan',isBoss:true,name:'【星噬者】',x:worldX,y:worldY-sr,size:100,speed:player.speed*0.6,hp:150000,maxHp:150000,angle:0,rotSpeed:0.05,vertices:v,actionTimer:0,knockbackX:0,knockbackY:0,damageFlash:0,color:'#000',kbResist:0,droneCd:0}; enemies.push(currentBoss); }
+    function spawnParticles(x,y,c,ct) { if(particles.length>200)ct=Math.floor(ct/4); for(let i=0;i<ct;i++){let a=Math.random()*Math.PI*2,s=Math.random()*3+1;particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:15+Math.random()*15,maxLife:30,color:c,size:Math.random()*3+1});} }
+    function spawnDestructible() { let a=Math.random()*Math.PI*2, sr=Math.max(canvas.width,canvas.height)/2+50+Math.random()*200; destructibles.push({x:worldX+Math.cos(a)*sr,y:worldY+Math.sin(a)*sr,size:20,hp:1}); }
 
-        // === UI 邏輯 ===
-        function safeUpdate(id,html) { let e=document.getElementById(id); if(e) e.innerHTML=html; }
-        function setHudVisible(v) { document.getElementById('game-ui').style.opacity = v ? '1' : '0'; }
-        function hideAllModals() { document.querySelectorAll('.modal, .popup-overlay').forEach(m=>m.classList.add('hidden')); document.getElementById('splash-screen').classList.add('hidden'); document.getElementById('radiation-warning').style.display='none'; }
+    let chestRewardItem=null;
+    function triggerChestAnimation() {
+        soundLevelUp(); gameState='chest'; setHudVisible(false); document.getElementById('chest-modal').classList.remove('hidden'); let b=document.getElementById('chest-box'); b.className='chest-img'; b.innerText='📦'; b.style.pointerEvents='auto'; let crui=document.getElementById('chest-reward-ui'); crui.style.display='none'; crui.classList.add('hidden'); chestRewardItem=null; let gold=100+Math.floor(Math.random()*100), readyEvo=null; for(let id in player.weapons){let w=player.weapons[id];if(w.level>=WEAPON_DB[id].maxLevel&&!w.isEvolved&&player.passives[WEAPON_DB[id].evoReq]){readyEvo=id;break;}} if(readyEvo){let db=WEAPON_DB[readyEvo];chestRewardItem={type:'evo',id:readyEvo,html:`<div class="card-icon-box" style="font-size:30px; border:none; background:transparent;">${db.evoIcon}</div><div class="card-content"><div class="card-title-row"><h3>${db.evoName}</h3><span class="card-tag evo-tag">進化</span></div><p class="card-desc" style="color:#facc15;">突破極限！</p></div>`};gold+=200;}else{let u=[];for(let w in player.weapons)if(player.weapons[w].level<WEAPON_DB[w].maxLevel)u.push({id:w,type:'weapon'});for(let p in player.passives)if(player.passives[p].level<PASSIVE_DB[p].maxLevel)u.push({id:p,type:'passive'});if(u.length>0){let p=u[Math.floor(Math.random()*u.length)],db=p.type==='weapon'?WEAPON_DB[p.id]:PASSIVE_DB[p.id],nl=(p.type==='weapon'?player.weapons[p.id].level:player.passives[p.id].level)+1;chestRewardItem={type:p.type,id:p.id,html:`<div class="card-icon-box" style="font-size:30px; border:none; background:transparent;">${db.icon}</div><div class="card-content"><div class="card-title-row"><h3>${db.name}</h3><span class="card-tag">Lv.${nl}</span></div><p class="card-desc">${db.desc[nl-1]||db.desc}</p></div>`};}else{chestRewardItem={type:'gold',html:`<div class="card-icon-box" style="font-size:30px; border:none; background:transparent;">💰</div><div class="card-content"><div class="card-title-row"><h3 style="color:#facc15;">巨型金幣</h3><span class="card-tag new">財富</span></div><p class="card-desc">獲得大量物資</p></div>`};gold+=500;}} safeUpdate('chest-coins',gold); document.getElementById('chest-item-box').innerHTML=chestRewardItem.html; document.getElementById('chest-item-box').className='list-card'; b.onclick=()=>{soundClick(); b.className='chest-img opening';setTimeout(()=>{b.innerText='✨';soundLevelUp(); spawnParticles(canvas.width/2,canvas.height/2,'#facc15',300);crui.style.display='flex'; crui.classList.remove('hidden'); collectedCoins+=gold;safeUpdate('ingame-coin-display',collectedCoins);if(chestRewardItem.type==='evo')evolveWeapon(chestRewardItem.id);else if(chestRewardItem.type==='weapon')upgradeWeapon(chestRewardItem.id);else if(chestRewardItem.type==='passive')upgradePassive(chestRewardItem.id);},1500);}; 
+    }
+    function closeChest() { soundClick(); document.getElementById('chest-modal').classList.add('hidden'); if(pendingLevelUps>0) processNextLevelUp(); else { setHudVisible(true); gameState='playing'; } }
+    
+    function triggerLevelUpModal() { 
+        soundLevelUp(); gameState='level_up'; setHudVisible(false); document.getElementById('level-up-modal').classList.remove('hidden'); let c=document.getElementById('upgrade-options'); c.innerHTML=''; let p=[]; if(Object.keys(player.weapons).length<6)for(let w in WEAPON_DB)if(!player.weapons[w])p.push({n:WEAPON_DB[w].name,i:WEAPON_DB[w].icon,d:WEAPON_DB[w].desc[0],t:'新武裝',cl:'new',a:()=>{acquireWeapon(w)}}); for(let w in player.weapons){let l=player.weapons[w].level;if(l<WEAPON_DB[w].maxLevel&&!player.weapons[w].isEvolved)p.push({n:WEAPON_DB[w].name, lv:l+1, i:WEAPON_DB[w].icon,d:WEAPON_DB[w].desc[l],t:'強化',cl:'',a:()=>{upgradeWeapon(w)}});} if(Object.keys(player.passives).length<6)for(let ps in PASSIVE_DB)if(!player.passives[ps])p.push({n:PASSIVE_DB[ps].name,i:PASSIVE_DB[ps].icon,d:PASSIVE_DB[ps].desc,t:'新裝備',cl:'passive',a:()=>{acquirePassive(ps)}}); for(let ps in player.passives){let l=player.passives[ps].level;if(l<PASSIVE_DB[ps].maxLevel)p.push({n:PASSIVE_DB[ps].name, lv:l+1, i:PASSIVE_DB[ps].icon,d:PASSIVE_DB[ps].desc,t:'強化',cl:'passive',a:()=>{upgradePassive(ps)}});} if(p.length===0){p.push({n:'醫療包',i:'🍗',d:'立刻恢復 50 點生命值',t:'物資',cl:'',a:()=>{player.hp=Math.min(player.maxHp,player.hp+50)}});p.push({n:'小金庫',i:'💰',d:'獲得 25 金幣',t:'物資',cl:'',a:()=>{collectedCoins+=25;safeUpdate('ingame-coin-display',collectedCoins)}});} let ch=p.sort(()=>0.5-Math.random()).slice(0,Math.random()<0.1?4:3); ch.forEach(x=>{let d=document.createElement('div');d.className=`list-card clickable ${x.cl==='new'?'chest':''}`;d.innerHTML=`<div class="card-icon-box">${x.i}</div><div class="card-content"><div class="card-title-row"><h3>${x.n}</h3><span class="card-tag ${x.t==='新武裝'||x.t==='新裝備'?'new':''}">${x.lv?('Lv.'+x.lv):x.t}</span></div><p class="card-desc">${x.d}</p></div>`;d.onclick=()=>{soundClick(); x.a(); document.getElementById('level-up-modal').classList.add('hidden'); processNextLevelUp();};c.appendChild(d);}); 
+    }
+
+    function checkLevelUp() { 
+        let leveled = false;
+        while(player.exp>=player.maxExp){
+            player.exp-=player.maxExp;player.level++;if(player.level===10)checkAchievement('reach_lv10');
+            if(player.level<10)player.maxExp+=5+player.level*2;else if(player.level<20)player.maxExp+=10+player.level*4;else if(player.level<40)player.maxExp+=30+player.level*8;else player.maxExp+=50+player.level*15;
+            player.maxHp+=2;player.hp=player.maxHp;pendingLevelUps++; leveled=true;
+        } 
+        if(leveled) {
+            safeUpdate('level-display',player.level);spawnParticles(worldX,worldY,'#facc15',50);
+            enemies.forEach(e=>{if(Math.hypot(worldX-e.x,worldY-e.y)<150&&!e.isBoss&&e.type!=='elite'&&e.type!=='tank')e.hp=0;});
+            if(gameState === 'playing') processNextLevelUp();
+        }
+        document.getElementById('exp-fill').style.width=Math.min(100,(player.exp/player.maxExp*100))+'%'; 
+    }
+    
+    // 🟢 唯一保留的跳字：補血 (不會出現傷害刮痧數字)
+    function addFloatingText(en,text,col) { floatTexts.push({x:en.x+(Math.random()-0.5)*10,y:en.y-20,text:text,life:40,color:col}); }
+
+    function update() {
+        if(gameState==='dying'){ deathTimer--; deathShockwaveRadius+=150; deathFlashAlpha*=0.7; for(let i=particles.length-1;i>=0;i--){particles[i].x+=particles[i].vx;particles[i].y+=particles[i].vy;particles[i].life--;particles[i].vx*=0.95;particles[i].vy*=0.95;if(particles[i].life<=0)particles.splice(i,1);} for(let i=floatTexts.length-1;i>=0;i--){floatTexts[i].y-=0.5;floatTexts[i].life--;if(floatTexts[i].life<=0)floatTexts.splice(i,1);} enemies.forEach(e=>{e.x+=Math.cos(e.angle)*e.speed*0.02;e.y+=Math.sin(e.angle)*e.speed*0.02;}); if(deathTimer<=0)gameOver(false); return; }
+        frameCount++; if(frameCount%60===0){ gameSeconds++; safeUpdate('time-display',`${String(Math.floor(gameSeconds/60)).padStart(2,'0')}:${String(gameSeconds%60).padStart(2,'0')}`); if(gameSeconds===60)checkAchievement('survive_1m'); if(gameSeconds===300)checkAchievement('survive_5m'); if(gameSeconds===300&&!bossSpawned){bossSpawned=true;spawnLeviathan();} }
+        if(player.passives.regen&&frameCount%300===0){ player.hp=Math.min(player.maxHp,player.hp+player.passives.regen.level); addFloatingText(player,"+"+player.passives.regen.level,'#4ade80'); }
+        if(frameCount%180===0&&!bossSpawned)spawnDestructible();
+        if(player.dashCd>0){ player.dashCd--; let d=document.getElementById('dash-btn'); if(d){if(player.dashCd===0){d.classList.remove('cooldown');d.innerHTML='<span>空間</span><span>摺疊</span>';}else d.innerText=Math.ceil(player.dashCd/60)+'s';} }
+        if(dashRequested&&player.dashCd===0){ soundDash(); dashRequested=false;player.isDashing=true;player.dashTimer=15;player.dashCd=240;document.getElementById('dash-btn').classList.add('cooldown');screenShake=Math.min(screenShake+8,12); }
+        let cs=player.isDashing?player.speed*4.0:player.speed; if(player.isDashing){player.dashTimer--;if(player.dashTimer<=0)player.isDashing=false;}
+        let dx=0,dy=0; if(keys['ArrowUp']||keys['KeyW'])dy-=1;if(keys['ArrowDown']||keys['KeyS'])dy+=1;if(keys['ArrowLeft']||keys['KeyA'])dx-=1;if(keys['ArrowRight']||keys['KeyD'])dx+=1;
+        let isM=dx!==0||dy!==0||(isTouching&&(touchVector.x!==0||touchVector.y!==0));
+        if(isM){ if(dx!==0||dy!==0){let d=Math.hypot(dx,dy);player.lastFacingX=dx/d;player.lastFacingY=dy/d;}else if(isTouching){player.lastFacingX=touchVector.x;player.lastFacingY=touchVector.y;} worldX+=player.lastFacingX*cs; worldY+=player.lastFacingY*cs; player.angle=Math.atan2(player.lastFacingY,player.lastFacingX); } else if(player.isDashing){worldX+=player.lastFacingX*cs;worldY+=player.lastFacingY*cs;}
         
-        function enterTitle() { initAudio(); soundClick(); hideAllModals(); document.getElementById('title-screen').classList.remove('hidden'); gameState='menu'; updateMenuCoins(); }
-        function backToMainMenu() { soundClick(); enterTitle(); }
-        function goToShop() { soundClick(); hideAllModals(); document.getElementById('shop-menu').classList.remove('hidden'); gameState='shop'; renderShop(); }
-        function goToAchievements() { soundClick(); hideAllModals(); document.getElementById('achievements-menu').classList.remove('hidden'); let c=document.getElementById('ach-list-container'); c.innerHTML=''; ACHIEVEMENTS.forEach(a=>{ let u=saveData.achievements&&saveData.achievements.includes(a.id); let d=document.createElement('div'); d.className=`list-card ach-item ${u?'unlocked':''}`; d.innerHTML=u?`<div class="card-icon-box" style="border:none; background:transparent; font-size:32px;">${a.icon}</div><div class="card-content"><div class="card-title-row"><h3>${a.title}</h3></div><p class="card-desc">${a.desc}</p><p style="color:#facc15; font-size:11px; margin-top:6px; font-weight:bold;">獎勵: ${a.reward}</p></div>`:`<div class="card-icon-box" style="border:none; background:transparent; font-size:32px;">❓</div><div class="card-content"><div class="card-title-row"><h3>未解鎖</h3></div><p class="card-desc">「${a.hint}」</p></div>`; c.appendChild(d); }); }
-        function goToCharSelect() { soundClick(); hideAllModals(); document.getElementById('char-select-menu').classList.remove('hidden'); gameState='char_select'; renderCharSelect(); }
-        function goToStageSelect() { soundClick(); hideAllModals(); if(saveData.achievements&&saveData.achievements.includes('survive_5m')){STAGES[1].locked=false;STAGES[1].desc='難度：★★☆';} document.getElementById('stage-select-menu').classList.remove('hidden'); gameState='stage_select'; renderStageSelect(); }
-        function updateMenuCoins() { safeUpdate('menu-coins',saveData.coins); safeUpdate('shop-coins-display',saveData.coins); safeUpdate('char-menu-coins',saveData.coins); safeUpdate('ingame-coin-display',collectedCoins); }
+        let distC=Math.hypot(worldX,worldY), rw=document.getElementById('radiation-warning');
+        if(distC>MAP_LIMIT){if(rw)rw.style.display='flex';if(frameCount%30===0){soundHit(); player.hp-=5;player.damageFlash=5;screenShake=Math.min(screenShake+2,5);if(player.hp<=0)gameOver(false);}}else{if(rw)rw.style.display='none';}
+
+        if(player.weapons.blaster){let w=player.weapons.blaster;w.timer++;let cd=Math.max(2,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult,a=Math.atan2(player.lastFacingY,player.lastFacingX);if(w.isEvolved){for(let i=0;i<w.count;i++){let ang=a+(i*Math.PI*2/w.count)+frameCount*0.1;bullets.push({type:'blaster',isEvo:true,x:worldX,y:worldY,vx:Math.cos(ang)*s,vy:Math.sin(ang)*s,life:40*globalDurationMult,damage:d});}}else{let sa=a-(w.count-1)*0.1;for(let i=0;i<w.count;i++){let ang=sa+i*0.2;bullets.push({type:'blaster',x:worldX,y:worldY,vx:Math.cos(ang)*s,vy:Math.sin(ang)*s,life:30*globalDurationMult,damage:d});}}}}
+        if(player.weapons.laser&&enemies.length>0){let w=player.weapons.laser;w.timer++;let cd=Math.max(2,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult;if(w.isEvolved){for(let i=0;i<2;i++){if(enemies.length>0){let t=enemies[Math.floor(Math.random()*enemies.length)];bullets.push({type:'laser_evo',x:t.x,y:t.y,vx:0,vy:0,life:10*globalDurationMult,damage:d,aoe:w.baseAoe*globalAreaMult});}}}else{let c=null,md=Infinity;enemies.forEach(e=>{let dist=Math.hypot(e.x-worldX,e.y-worldY);if(dist<md){md=dist;c=e;}});if(c&&md<600){let a=Math.atan2(c.y-worldY,c.x-worldX);bullets.push({type:'laser',x:worldX,y:worldY,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:40*globalDurationMult,damage:d});}}}}
+        if(player.weapons.plasma){let w=player.weapons.plasma;w.timer++;let cd=Math.max(10,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult,aoe=w.baseAoe*globalAreaMult;if(w.isEvolved){bullets.push({type:'plasma',isEvo:true,x:worldX,y:worldY,vx:Math.cos(player.angle)*s,vy:Math.sin(player.angle)*s,life:120*globalDurationMult,damage:d,aoe:aoe});}else{for(let i=0;i<w.count;i++){let a=Math.random()*Math.PI*2;bullets.push({type:'plasma',x:worldX,y:worldY,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:60*globalDurationMult,damage:d,aoe:aoe});}}}}
+        if(player.weapons.bomb){let w=player.weapons.bomb;w.timer++;let cd=Math.max(20,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult,aoe=w.baseAoe*globalAreaMult;if(w.isEvolved){bullets.push({type:'bomb',isEvo:true,x:worldX,y:worldY,vx:Math.cos(player.angle)*s*0.5,vy:Math.sin(player.angle)*s*0.5,life:60*globalDurationMult,damage:d,aoe:aoe});}else{for(let i=0;i<w.count;i++){let a=player.angle+(Math.random()-0.5);bullets.push({type:'bomb',x:worldX,y:worldY,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:30+Math.random()*20,damage:d,aoe:aoe});}}}}
+        if(player.weapons.blade){let w=player.weapons.blade;w.timer++;let cd=Math.max(10,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult,aoe=w.baseAoe*globalAreaMult,a=Math.atan2(player.lastFacingY,player.lastFacingX);bullets.push({type:'blade',isEvo:w.isEvolved,x:worldX,y:worldY,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:10*globalDurationMult,damage:d,aoe:aoe,angle:a});}}
+        if(player.weapons.mine){let w=player.weapons.mine;w.timer++;let cd=Math.max(20,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;let d=w.baseDamage*globalDmgMult,aoe=w.baseAoe*globalAreaMult;for(let i=0;i<w.count;i++){let ox=(Math.random()-0.5)*40,oy=(Math.random()-0.5)*40;bullets.push({type:'mine',isEvo:w.isEvolved,x:worldX+ox,y:worldY+oy,vx:0,vy:0,life:120*globalDurationMult,damage:d,aoe:aoe});}}}
         
-        function renderCharSelect() { 
-            let g=document.getElementById('char-grid'); g.innerHTML=''; 
-            CHARACTERS.forEach((c,i)=>{ let d=document.createElement('div'); d.className=`char-slot ${i===selectedCharIndex?'selected':''}`; d.innerText=c.icon; d.onclick=()=>{soundClick();selectedCharIndex=i;renderCharSelect();}; g.appendChild(d); }); 
-            let c=CHARACTERS[selectedCharIndex]; safeUpdate('char-name',c.name); safeUpdate('char-sprite-display',c.icon); safeUpdate('char-weapon',WEAPON_DB[c.weapon].name); safeUpdate('char-desc',c.desc); 
-            safeUpdate('char-stats',`<div class="stat-item-row"><span class="stat-label">最大生命</span><span class="stat-value">${c.hp} <span class="bonus">+${(saveData.upgrades.hp||0)*10}</span></span></div><div class="stat-item-row"><span class="stat-label">恢復</span><span class="stat-value">0</span></div><div class="stat-item-row"><span class="stat-label">裝甲</span><span class="stat-value">0</span></div><div class="stat-item-row"><span class="stat-label">移動速度</span><span class="stat-value">${c.speed.toFixed(1)} <span class="bonus">+${(saveData.upgrades.speed||0)*5}%</span></span></div><div class="stat-item-row"><span class="stat-label">力量</span><span class="stat-value">+${Math.round((c.damage-1)*100)}% <span class="bonus">+${(saveData.upgrades.damage||0)*5}%</span></span></div><div class="stat-item-row"><span class="stat-label">範圍</span><span class="stat-value">100%</span></div><div class="stat-item-row"><span class="stat-label">速度</span><span class="stat-value">100%</span></div><div class="stat-item-row"><span class="stat-label">持續時間</span><span class="stat-value">100%</span></div><div class="stat-item-row"><span class="stat-label">數量</span><span class="stat-value">0</span></div><div class="stat-item-row"><span class="stat-label">冷卻時間</span><span class="stat-value">-0%</span></div><div class="stat-item-row"><span class="stat-label">磁鐵</span><span class="stat-value">100 <span class="bonus">+${(saveData.upgrades.magnet||0)*10}%</span></span></div><div class="stat-item-row"><span class="stat-label">幸運</span><span class="stat-value">0%</span></div>`); 
-            updateMenuCoins(); 
+        const orbitals=[]; if(player.weapons.drone){let w=player.weapons.drone, s=w.baseSpeed*globalProjSpeedMult, r=w.baseRadius*globalAreaMult, os=frameCount*s; for(let i=0;i<w.count;i++)orbitals.push({x:worldX+Math.cos(os+(Math.PI*2/w.count)*i)*r,y:worldY+Math.sin(os+(Math.PI*2/w.count)*i)*r});}
+
+        let spI=30; if(gameSeconds>=30)spI=20; if(gameSeconds>=60)spI=15; if(gameSeconds>=120)spI=10; if(gameSeconds>=180)spI=8; if(gameSeconds>=240)spI=5;
+        if(gameSeconds<300&&!bossSpawned){if(frameCount%spI===0)spawnEnemyBatch();}
+
+        for(let i=bullets.length-1;i>=0;i--){
+            let b=bullets[i]; b.x+=b.vx;b.y+=b.vy;b.life--;
+            if(b.type==='bomb'&&!b.isEvo)b.vy+=0.2;
+            if(b.type==='blade'){b.x+=dx*cs*0.5;b.y+=dy*cs*0.5;}
+            if((b.type==='bomb'||b.type==='mine')&&b.life<=0){ let c=b.type==='mine'?'#f59e0b':(b.isEvo?'#22c55e':'#f43f5e'); spawnParticles(b.x,b.y,c,b.isEvo?60:20); if(b.isEvo)screenShake=Math.min(screenShake+10,20); enemies.forEach(e=>{if(Math.hypot(b.x-e.x,b.y-e.y)<b.aoe){e.hp-=b.damage;e.damageFlash=6; soundHit();}}); bullets.splice(i,1); continue; }
+            if(b.life<=0)bullets.splice(i,1);
         }
-        function renderStageSelect() { let l=document.getElementById('stage-list'); l.innerHTML=''; STAGES.forEach((s,i)=>{ let d=document.createElement('div'); d.className=`list-card stage-card ${i===selectedStageIndex?'selected':''} ${s.locked?'locked':''}`; d.innerHTML=`<h3>${s.name}</h3><p>${s.desc}</p>`; if(!s.locked)d.onclick=()=>{soundClick();selectedStageIndex=i;renderStageSelect();}; l.appendChild(d); }); }
-        function renderShop() { let c=document.getElementById('shop-items-container'); c.innerHTML=''; for(let k in shopConfig){ let i=shopConfig[k], lv=saveData.upgrades[k]||0, cost=i.baseCost*(lv+1), max=lv>=i.maxLevel; let d=document.createElement('div'); d.className='list-card shop-card'; d.innerHTML=`<div class="card-icon-box" style="border:none; background:transparent;">⚙️</div><div class="card-content"><div class="card-title-row"><h3>${i.name}</h3><span class="card-tag" style="color:#94a3b8">Lv.${lv}/${i.maxLevel}</span></div><p class="card-desc">${i.desc}</p></div><button class="btn-main btn-green-main btn-small" style="margin-left:10px; flex-shrink:0;" ${max||saveData.coins<cost?'disabled':''} onclick="event.stopPropagation(); buyUpgrade('${k}',${cost})">${max?'MAX':`💰${cost}`}</button>`; c.appendChild(d); } updateMenuCoins(); }
-        function buyUpgrade(k,c) { soundLevelUp(); if(saveData.coins>=c){saveData.coins-=c;saveData.upgrades[k]=(saveData.upgrades[k]||0)+1;saveGame();renderShop();} }
-        function checkAchievement(id) { if(!saveData.achievements)saveData.achievements=[]; if(!saveData.achievements.includes(id)){ saveData.achievements.push(id); if(id==='kill_elite')saveData.coins+=500; saveGame(); let a=ACHIEVEMENTS.find(x=>x.id===id); if(a){soundLevelUp(); safeUpdate('ach-popup-title',a.title); let p = document.getElementById('achievement-popup'); p.style.display='flex'; setTimeout(()=>{p.style.display='none';},3500);} } }
-        function calcStats() { let c=CHARACTERS[selectedCharIndex]; globalDmgMult=c.damage+(saveData.upgrades.damage||0)*0.05; globalCdMult=1; globalProjSpeedMult=1; globalAreaMult=1; globalDurationMult=1; if(player.passives.damage)globalDmgMult+=player.passives.damage.level*0.1; if(player.passives.cooldown)globalCdMult-=player.passives.cooldown.level*0.08; if(player.passives.proj_speed)globalProjSpeedMult+=player.passives.proj_speed.level*0.1; if(player.passives.area)globalAreaMult+=player.passives.area.level*0.1; if(player.passives.duration)globalDurationMult+=player.passives.duration.level*0.15; player.pickupRadius=100*(1+(saveData.upgrades.magnet||0)*0.1); if(player.passives.magnet)player.pickupRadius*=(1+player.passives.magnet.level*0.25); globalCdMult=Math.max(0.1,globalCdMult); if(c.id==='ranger')globalDmgMult+=Math.floor(player.level/10)*0.1; if(c.id==='engineer')globalDurationMult+=0.2; if(c.id==='scavenger')player.pickupRadius+=50; }
-        
-        function updateInventoryUI() { let f=(rId,src, isP)=>{ let r=document.getElementById(rId); if(!r)return; r.innerHTML=''; for(let i=0;i<6;i++){ let ks=Object.keys(src), d=document.createElement('div'); if(i<ks.length){ let id=ks[i], w=src[id], db=isP?PASSIVE_DB[id]:WEAPON_DB[id]; d.className=`weapon-slot ${w.isEvolved?'evolved':''} ${isP?'passive':''}`; d.innerHTML=`${db.icon}<div class="lvl-badge">${w.isEvolved?'M':w.level}</div>`; }else{ d.className=`weapon-slot empty ${isP?'passive':''}`; } r.appendChild(d); } }; f('weapon-row',player.weapons, false); f('passive-row',player.passives, true); f('pause-weapon-row',player.weapons, false); f('pause-passive-row',player.passives, true); }
-        function acquireWeapon(id) { if(id==='blaster')player.weapons.blaster={level:1,baseDamage:15,baseCooldown:40,baseSpeed:14,count:1,timer:0,isEvolved:false}; if(id==='laser')player.weapons.laser={level:1,baseDamage:10,baseCooldown:50,baseSpeed:15,timer:0,isEvolved:false}; if(id==='drone')player.weapons.drone={level:1,baseDamage:10,count:2,baseRadius:50,baseSpeed:0.05,isEvolved:false}; if(id==='plasma')player.weapons.plasma={level:1,baseDamage:20,baseCooldown:80,baseSpeed:5,count:2,baseAoe:30,timer:0,isEvolved:false}; if(id==='aura')player.weapons.aura={level:1,baseDamage:6,baseRadius:35,baseTickRate:20,timer:0,isEvolved:false}; if(id==='bomb')player.weapons.bomb={level:1,baseDamage:25,baseCooldown:100,baseSpeed:6,count:1,baseAoe:50,timer:0,isEvolved:false}; if(id==='blade')player.weapons.blade={level:1,baseDamage:18,baseCooldown:60,baseSpeed:8,count:1,baseAoe:40,timer:0,isEvolved:false}; if(id==='mine')player.weapons.mine={level:1,baseDamage:35,baseCooldown:90,count:1,baseAoe:50,timer:0,isEvolved:false}; updateInventoryUI(); calcStats(); }
-        function upgradeWeapon(id) { let w=player.weapons[id]; w.level++; if(id==='blaster'){if(w.level===2)w.count=2;if(w.level===3)w.baseDamage+=4;if(w.level===4)w.count=3;if(w.level===5)w.baseDamage+=5;if(w.level===6)w.baseSpeed+=3;if(w.level===7)w.baseDamage+=6;if(w.level===8)w.baseCooldown-=10;} if(id==='laser'){if(w.level===2)w.baseDamage+=3;if(w.level===3)w.baseCooldown-=5;if(w.level===4)w.baseDamage+=4;if(w.level===5)w.baseSpeed+=2;if(w.level===6)w.baseCooldown-=5;if(w.level===7)w.baseDamage+=5;if(w.level===8)w.baseCooldown-=10;} if(id==='drone'){if(w.level===2)w.baseDamage+=2;if(w.level===3)w.count=3;if(w.level===4)w.baseSpeed+=0.02;if(w.level===5)w.baseRadius+=10;if(w.level===6)w.count=4;if(w.level===7)w.baseDamage+=3;if(w.level===8)w.count=5;} if(id==='plasma'){if(w.level===2)w.baseAoe+=10;if(w.level===3)w.count=3;if(w.level===4)w.baseDamage+=5;if(w.level===5)w.baseCooldown-=10;if(w.level===6)w.count=4;if(w.level===7)w.baseAoe+=10;if(w.level===8)w.baseCooldown-=15;} if(id==='aura'){if(w.level===2)w.baseRadius+=10;if(w.level===3)w.baseTickRate-=5;if(w.level===4)w.baseDamage+=2;if(w.level===5)w.baseRadius+=10;if(w.level===6)w.baseTickRate-=5;if(w.level===7)w.baseDamage+=2;if(w.level===8)w.baseRadius+=15;} if(id==='bomb'){if(w.level===2)w.baseAoe+=10;if(w.level===3)w.baseCooldown-=10;if(w.level===4)w.count=2;if(w.level===5)w.baseDamage+=10;if(w.level===6)w.baseAoe+=15;if(w.level===7)w.count=3;if(w.level===8)w.baseCooldown-=15;} if(id==='blade'){if(w.level===2)w.baseDamage+=5;if(w.level===3)w.baseAoe+=10;if(w.level===4)w.baseCooldown-=5;if(w.level===5)w.baseDamage+=5;if(w.level===6)w.baseAoe+=15;if(w.level===7)w.baseCooldown-=5;if(w.level===8)w.baseDamage+=10;} if(id==='mine'){if(w.level===2)w.baseDamage+=10;if(w.level===3)w.count=2;if(w.level===4)w.baseAoe+=10;if(w.level===5)w.baseDamage+=10;if(w.level===6)w.baseCooldown-=10;if(w.level===7)w.baseAoe+=15;if(w.level===8)w.count=3;} updateInventoryUI(); }
-        function evolveWeapon(id) { let w=player.weapons[id]; w.isEvolved=true; if(id==='blaster'){w.count=5;w.baseCooldown=15;w.baseDamage*=1.2;w.baseSpeed=20;} if(id==='laser'){w.baseCooldown=20;w.baseDamage*=1.5;w.baseAoe=50;} if(id==='drone'){w.count=8;w.baseSpeed=0.15;w.baseRadius=80;w.baseDamage*=1.5;} if(id==='plasma'){w.count=1;w.baseCooldown=120;w.baseSpeed=2;w.baseAoe=120;w.baseDamage*=3;} if(id==='aura'){w.baseTickRate=12;w.baseRadius=70;w.baseDamage*=1.5;} if(id==='bomb'){w.count=1;w.baseCooldown=200;w.baseAoe=180;w.baseDamage*=5;} if(id==='blade'){w.baseCooldown=30;w.baseAoe=90;w.baseDamage*=2;w.baseSpeed=12;} if(id==='mine'){w.count=2;w.baseCooldown=60;w.baseAoe=120;w.baseDamage*=3;} updateInventoryUI(); checkAchievement('evolve_weapon'); }
-        function acquirePassive(id) { player.passives[id]={level:1}; updateInventoryUI(); calcStats(); }
-        function upgradePassive(id) { player.passives[id].level++; updateInventoryUI(); calcStats(); }
-
-        let joystickTouchId=null, isTouching=false, joystickOrigin=null, joystickCurrent=null, touchVector={x:0,y:0};
-        canvas.addEventListener('touchstart',e=>{e.preventDefault();if(joystickTouchId!==null)return;let t=e.changedTouches[0];joystickTouchId=t.identifier;joystickOrigin={x:t.clientX,y:t.clientY};joystickCurrent={x:t.clientX,y:t.clientY};isTouching=true;touchVector={x:0,y:0};},{passive:false});
-        canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!isTouching||joystickTouchId===null)return;let t=null;for(let i=0;i<e.touches.length;i++){if(e.touches[i].identifier===joystickTouchId){t=e.touches[i];break;}}if(!t)return;joystickCurrent={x:t.clientX,y:t.clientY};let d=Math.hypot(joystickCurrent.x-joystickOrigin.x,joystickCurrent.y-joystickOrigin.y);if(d>5){touchVector.x=(joystickCurrent.x-joystickOrigin.x)/d;touchVector.y=(joystickCurrent.y-joystickOrigin.y)/d;}},{passive:false});
-        function handleTE(e){e.preventDefault();if(joystickTouchId===null)return;let L=false;for(let i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===joystickTouchId){L=true;break;}}if(L){isTouching=false;joystickOrigin=null;joystickCurrent=null;touchVector={x:0,y:0};joystickTouchId=null;}}
-        canvas.addEventListener('touchend',handleTE,{passive:false}); canvas.addEventListener('touchcancel',handleTE,{passive:false});
-
-        // 🔄 完美的升級排隊系統 (防畫面殘留與吃次數)
-        let pendingLevelUps = 0;
-        function processNextLevelUp() {
-            if (pendingLevelUps > 0) {
-                pendingLevelUps--;
-                triggerLevelUpModal();
-            } else {
-                setHudVisible(true);
-                gameState = 'playing';
-            }
+        for(let i=particles.length-1;i>=0;i--){particles[i].x+=particles[i].vx;particles[i].y+=particles[i].vy;particles[i].life--;particles[i].vx*=0.92;particles[i].vy*=0.92;if(particles[i].life<=0)particles.splice(i,1);}
+        for(let i=destructibles.length-1;i>=0;i--){
+            let d=destructibles[i], isH=false;
+            for(let j=bullets.length-1;j>=0;j--){if(bullets[j].type==='bomb'||bullets[j].type==='mine')continue;if(Math.hypot(bullets[j].x-d.x,bullets[j].y-d.y)<d.size+(bullets[j].aoe||15)){isH=true;if(!bullets[j].isEvo&&bullets[j].type!=='laser_evo'&&bullets[j].type!=='blade')bullets.splice(j,1);break;}}
+            if(!isH&&player.weapons.drone)orbitals.forEach(o=>{if(Math.hypot(o.x-d.x,o.y-d.y)<d.size+15)isH=true;});
+            if(!isH&&player.weapons.aura)if(Math.hypot(worldX-d.x,worldY-d.y)<player.weapons.aura.baseRadius*globalAreaMult+d.size)isH=true;
+            if(isH){ soundHit(); spawnParticles(d.x,d.y,'#38bdf8',15); let r=Math.random(); if(r<0.2)consumables.push({type:'heal',x:d.x,y:d.y}); else if(r<0.3)consumables.push({type:'bomb',x:d.x,y:d.y}); else if(r<0.4)consumables.push({type:'magnet',x:d.x,y:d.y}); else coinsArr.push({x:d.x,y:d.y,value:10}); destructiblesDestroyed++; if(destructiblesDestroyed>=20)checkAchievement('destroy_20'); destructibles.splice(i,1); }
         }
 
-        function startGame() { soundClick(); hideAllModals(); let c=CHARACTERS[selectedCharIndex]; player={size:16,speed:c.speed+(saveData.upgrades.speed||0)*0.5,hp:c.hp+(saveData.upgrades.hp||0)*10,maxHp:c.hp+(saveData.upgrades.hp||0)*10,exp:0,maxExp:5,level:1,angle:-Math.PI/2,lastFacingX:1,lastFacingY:0,damageFlash:0,weapons:{},passives:{},dashCd:0,isDashing:false,dashTimer:0,invincibleTimer:0}; calcStats(); acquireWeapon(c.weapon); worldX=0;worldY=0;score=0;frameCount=0;gameSeconds=0;collectedCoins=0;screenShake=0;deathTimer=0; pendingLevelUps=0; enemies=[];bullets=[];gems=[];coinsArr=[];floatTexts=[];particles=[];destructibles=[];consumables=[]; destructiblesDestroyed=0;bossSpawned=false;currentBoss=null;joystickTouchId=null;isTouching=false;touchVector={x:0,y:0}; document.getElementById('game-ui').classList.remove('hidden'); document.getElementById('exp-fill').style.width='0%'; safeUpdate('level-display','1'); safeUpdate('score-display','0'); safeUpdate('time-display','00:00'); document.getElementById('time-display').classList.remove('boss'); document.getElementById('dash-btn').classList.remove('cooldown'); updateMenuCoins(); updateInventoryUI(); setHudVisible(true); gameState='playing'; }
-        function gameOver(v=false) { playTone(100, 'sawtooth', 1.0, 0.2); gameState='gameover'; setHudVisible(false); document.getElementById('game-ui').classList.add('hidden'); let t=document.getElementById('game-over-title'); if(v){t.innerText='任務完成';t.style.color='#facc15';}else{t.innerText='訊號中斷';t.style.color='#f87171';} safeUpdate('final-level',player.level); safeUpdate('final-score',score); safeUpdate('final-time',`${String(Math.floor(gameSeconds/60)).padStart(2,'0')}:${String(gameSeconds%60).padStart(2,'0')}`); safeUpdate('final-coins',collectedCoins); saveData.coins+=collectedCoins; saveGame(); document.getElementById('game-over-modal').classList.remove('hidden'); }
-        function togglePause() { soundClick(); if(gameState==='playing'){gameState='paused'; setHudVisible(false); document.getElementById('pause-modal').classList.remove('hidden');} }
-        function resumeFromPause() { soundClick(); gameState='playing'; document.getElementById('pause-modal').classList.add('hidden'); setHudVisible(true); }
-        function quitToMenu() { soundClick(); saveData.coins+=collectedCoins; saveGame(); document.getElementById('game-ui').classList.add('hidden'); enterTitle(); }
-        let dashRequested=false; function triggerDash() { if(player.dashCd<=0&&gameState==='playing')dashRequested=true; }
+        let dt=0, cw=canvas.width, ch=canvas.height, respD=Math.max(cw,ch)+150;
+        for(let i=enemies.length-1;i>=0;i--){
+            let e=enemies[i];
+            // 💥 Boids 實體排斥
+            for(let k=1;k<=3;k++){if(i-k>=0){let o=enemies[i-k], d=Math.hypot(e.x-o.x,e.y-o.y), md=(e.size+o.size)*0.8; if(d>0&&d<md){let ov=(md-d)*0.5, nx=(e.x-o.x)/d, ny=(e.y-o.y)/d; e.x+=nx*ov; e.y+=ny*ov; o.x-=nx*ov; o.y-=ny*ov;}}}
+            // 🔄 超空間動態重置
+            if(Math.hypot(worldX-e.x,worldY-e.y)>respD && !e.isBoss){ let a=Math.random()*Math.PI*2; if(dx!==0||dy!==0)a=Math.atan2(dy,dx)+(Math.random()-0.5)*Math.PI; let r=Math.max(cw,ch)/2+100; e.x=worldX+Math.cos(a)*r; e.y=worldY+Math.sin(a)*r; }
 
-        const stars=[], nebulas=[]; for(let i=0;i<200;i++)stars.push({x:Math.random()*3000,y:Math.random()*3000,size:Math.random()*1.5+0.5,depth:Math.random()*0.4+0.1}); for(let i=0;i<8;i++)nebulas.push({x:Math.random()*4000,y:Math.random()*4000,radius:400+Math.random()*600,hue:Math.random()*360,depth:0.02});
-        const keys={}; window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys[e.code]=true;if(e.code==='Escape'||e.code==='KeyP')togglePause();if(e.code==='Space')triggerDash();}); window.addEventListener('keyup',e=>keys[e.code]=false);
+            if(e.type==='leviathan'){let ex=worldX-e.x,ey=worldY-e.y,d=Math.hypot(ex,ey);if(d>200){e.x+=(ex/d)*e.speed;e.y+=(ey/d)*e.speed;}e.angle+=e.rotSpeed;e.actionTimer++;if(e.actionTimer>=180){e.actionTimer=0;screenShake=20;for(let b=0;b<12;b++){let ba=(b/12)*Math.PI*2+e.angle;enemies.push({type:'boss_bullet',isBoss:false,x:e.x,y:e.y,size:8,speed:4,hp:1,maxHp:1,angle:ba,rotSpeed:0,vertices:[{a:0,r:1},{a:2,r:1},{a:4,r:1}],knockbackX:Math.cos(ba)*4,knockbackY:Math.sin(ba)*4,damageFlash:0,color:'#ef4444',kbResist:1});}}}else if(e.type==='boss_bullet'){e.x+=e.knockbackX;e.y+=e.knockbackY;}else{if(e.type==='charger'){e.actionTimer++;if(e.actionTimer<60){e.x+=Math.cos(e.angle)*e.speed;e.y+=Math.sin(e.angle)*e.speed;}else if(e.actionTimer===60)e.angle=Math.atan2(worldY-e.y,worldX-e.x);else if(e.actionTimer>80)e.actionTimer=0;}else{let ex=worldX-e.x,ey=worldY-e.y,d=Math.hypot(ex,ey);if(d>0){e.x+=(ex/d)*e.speed+e.knockbackX;e.y+=(ey/d)*e.speed+e.knockbackY;}e.angle+=e.rotSpeed;}}
+            e.knockbackX*=0.85;e.knockbackY*=0.85;if(e.damageFlash>0)e.damageFlash--;
+            if(player.isDashing){if(!e.isBoss&&e.type!=='death'&&Math.hypot(worldX-e.x,worldY-e.y)<player.size+e.size+15){e.hp=0;spawnParticles(e.x,e.y,'#a78bfa',5); soundHit();}}else if(player.invincibleTimer<=0&&Math.hypot(worldX-e.x,worldY-e.y)<player.size+e.size-5){let d=10;if(e.type==='splitter')d=15;if(e.type==='tank')d=20;if(e.type==='charger')d=25;if(e.type==='elite')d=30;if(e.type==='boss_bullet')d=40;if(e.type==='death'||e.type==='leviathan')d=9999;dt=Math.max(dt,d);}
+            if(player.weapons.aura){let w=player.weapons.aura,r=w.baseRadius*globalAreaMult;if(Math.hypot(e.x-worldX,e.y-worldY)<r+e.size){if(frameCount%Math.max(1,Math.floor(w.baseTickRate*globalCdMult))===0){e.hp-=w.baseDamage*globalDmgMult;let aa=Math.atan2(e.y-worldY,e.x-worldX);e.knockbackX+=Math.cos(aa)*0.5*e.kbResist;e.knockbackY+=Math.sin(aa)*0.5*e.kbResist;e.damageFlash=8; screenShake=Math.max(screenShake,2);soundHit();}}}
+            if(player.weapons.drone){let w=player.weapons.drone;orbitals.forEach(o=>{if(Math.hypot(o.x-e.x,o.y-e.y)<e.size+15){if(!e.droneCd||e.droneCd<=0){e.hp-=w.baseDamage*globalDmgMult;e.damageFlash=8;let ka=Math.atan2(e.y-o.y,e.x-o.x);e.knockbackX+=Math.cos(ka)*4*e.kbResist;e.knockbackY+=Math.sin(ka)*4*e.kbResist;spawnParticles(o.x,o.y,w.isEvolved?'#c084fc':'#facc15',3);screenShake=Math.max(screenShake,3);e.droneCd=Math.max(10,Math.floor(15*globalCdMult));soundHit();}}});if(e.droneCd>0)e.droneCd--;}
 
-        function getScreenPos(wx,wy) { return {x:wx-worldX+canvas.width/2,y:wy-worldY+canvas.height/2}; }
-        function spawnEnemyBatch() {
-            if(enemies.length>800||bossSpawned)return;
-            let wm=Math.floor(gameSeconds/30), hpSc=1+wm*0.8+Math.pow(wm,2)*0.4, count=15+Math.floor(gameSeconds/5)*5; 
-            let isS=(gameSeconds%60>=45); if(isS)count*=3; let radB=Math.max(canvas.width,canvas.height)/2+50;
-            for(let i=0;i<count;i++){
-                let ty='minion'; if(wm>=1&&Math.random()<0.15)ty='splitter'; if(wm>=3&&Math.random()<0.2+(wm*0.03))ty='tank'; if(wm>=4&&Math.random()<0.1)ty='charger'; if(gameSeconds>0&&gameSeconds%30===0&&i===0)ty='elite';
-                let sz,sp,hp,col,vc,kbR, spSc=1+wm*0.05;
-                if(ty==='elite'){sz=35+Math.random()*10;sp=0.9*spSc;hp=250*hpSc;col='#9f1239';vc=4;kbR=0.1;} else if(ty==='tank'){sz=25+Math.random()*5;sp=0.6*spSc;hp=80*hpSc;col='#4c1d95';vc=6;kbR=0.15;} else if(ty==='charger'){sz=15+Math.random()*3;sp=2.5*spSc;hp=15*hpSc;col='#fbbf24';vc=3;kbR=0.5;} else if(ty==='splitter'){sz=18+Math.random()*4;sp=1.4*spSc;hp=15*hpSc;col='#ea580c';vc=5;kbR=0.7;} else{sz=12+Math.random()*3;sp=(isS?1.8:1.1)*spSc+Math.random()*0.3;hp=(isS?4:8)*hpSc;col=isS?'#3b82f6':'#1e293b';vc=4;kbR=0.9;}
-                let v=[]; for(let j=0;j<vc;j++)v.push({a:(j/vc)*Math.PI*2,r:0.7+Math.random()*0.6});
-                let a=Math.random()*Math.PI*2, sx,sy;
-                if(isS){ let side=Math.floor(gameSeconds/5)%4; if(side===0){sx=worldX+(Math.random()-0.5)*canvas.width;sy=worldY-radB;} if(side===1){sx=worldX+radB;sy=worldY+(Math.random()-0.5)*canvas.height;} if(side===2){sx=worldX+(Math.random()-0.5)*canvas.width;sy=worldY+radB;} if(side===3){sx=worldX-radB;sy=worldY+(Math.random()-0.5)*canvas.height;} }
-                else { let dR=radB+Math.random()*200; sx=worldX+Math.cos(a)*dR; sy=worldY+Math.sin(a)*dR; }
-                enemies.push({type:ty,isBoss:false,x:sx,y:sy,size:sz,speed:sp,hp:hp,maxHp:hp,angle:0,rotSpeed:(Math.random()-0.5)*0.05,vertices:v,knockbackX:0,knockbackY:0,damageFlash:0,color:col,kbResist:kbR,actionTimer:0,droneCd:0});
-            }
-        }
-        function spawnLeviathan() { enemies=[]; let sr=Math.max(canvas.width,canvas.height)/2+100, v=[]; for(let i=0;i<12;i++)v.push({a:(i/12)*Math.PI*2,r:i%2===0?1:0.6}); currentBoss={type:'leviathan',isBoss:true,name:'【星噬者】',x:worldX,y:worldY-sr,size:100,speed:player.speed*0.6,hp:150000,maxHp:150000,angle:0,rotSpeed:0.05,vertices:v,actionTimer:0,knockbackX:0,knockbackY:0,damageFlash:0,color:'#000',kbResist:0,droneCd:0}; enemies.push(currentBoss); document.getElementById('time-display').classList.add('boss'); }
-        function spawnParticles(x,y,c,ct) { if(particles.length>200)ct=Math.floor(ct/4); for(let i=0;i<ct;i++){let a=Math.random()*Math.PI*2,s=Math.random()*3+1;particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:15+Math.random()*15,maxLife:30,color:c,size:Math.random()*3+1});} }
-        function spawnDestructible() { let a=Math.random()*Math.PI*2, sr=Math.max(canvas.width,canvas.height)/2+50+Math.random()*200; destructibles.push({x:worldX+Math.cos(a)*sr,y:worldY+Math.sin(a)*sr,size:20,hp:1}); }
-
-        let chestRewardItem=null;
-        function triggerChestAnimation() {
-            soundLevelUp(); gameState='chest'; setHudVisible(false); document.getElementById('chest-modal').classList.remove('hidden'); let b=document.getElementById('chest-box'); b.className='chest-img'; b.innerText='📦'; b.style.pointerEvents='auto'; let crui=document.getElementById('chest-reward-ui'); crui.style.display='none'; crui.classList.add('hidden'); chestRewardItem=null; let gold=100+Math.floor(Math.random()*100), readyEvo=null; for(let id in player.weapons){let w=player.weapons[id];if(w.level>=WEAPON_DB[id].maxLevel&&!w.isEvolved&&player.passives[WEAPON_DB[id].evoReq]){readyEvo=id;break;}} if(readyEvo){let db=WEAPON_DB[readyEvo];chestRewardItem={type:'evo',id:readyEvo,html:`<div class="card-icon-box" style="border:none; background:transparent; font-size:36px;">${db.evoIcon}</div><div class="card-content"><div class="card-title-row"><h3>${db.evoName}</h3><span class="card-tag evo-tag">進化</span></div><p class="card-desc" style="color:#facc15;">突破極限！</p></div>`};gold+=200;}else{let u=[];for(let w in player.weapons)if(player.weapons[w].level<WEAPON_DB[w].maxLevel)u.push({id:w,type:'weapon'});for(let p in player.passives)if(player.passives[p].level<PASSIVE_DB[p].maxLevel)u.push({id:p,type:'passive'});if(u.length>0){let p=u[Math.floor(Math.random()*u.length)],db=p.type==='weapon'?WEAPON_DB[p.id]:PASSIVE_DB[p.id],nl=(p.type==='weapon'?player.weapons[p.id].level:player.passives[p.id].level)+1;chestRewardItem={type:p.type,id:p.id,html:`<div class="card-icon-box" style="border:none; background:transparent; font-size:36px;">${db.icon}</div><div class="card-content"><div class="card-title-row"><h3>${db.name}</h3><span class="card-tag">Lv.${nl}</span></div><p class="card-desc">${db.desc[nl-1]||db.desc}</p></div>`};}else{chestRewardItem={type:'gold',html:`<div class="card-icon-box" style="border:none; background:transparent; font-size:36px;">💰</div><div class="card-content"><div class="card-title-row"><h3 style="color:#facc15;">巨型金幣</h3><span class="card-tag new">財富</span></div><p class="card-desc">獲得大量物資</p></div>`};gold+=500;}} safeUpdate('chest-coins',gold); document.getElementById('chest-item-box').innerHTML=chestRewardItem.html; document.getElementById('chest-item-box').className='list-card'; b.onclick=()=>{soundClick(); b.className='chest-img opening';setTimeout(()=>{b.innerText='✨';soundLevelUp(); spawnParticles(canvas.width/2,canvas.height/2,'#facc15',300);crui.style.display='flex'; crui.classList.remove('hidden'); collectedCoins+=gold;safeUpdate('ingame-coin-display',collectedCoins);if(chestRewardItem.type==='evo')evolveWeapon(chestRewardItem.id);else if(chestRewardItem.type==='weapon')upgradeWeapon(chestRewardItem.id);else if(chestRewardItem.type==='passive')upgradePassive(chestRewardItem.id);},1500);}; 
-        }
-        function closeChest() { soundClick(); document.getElementById('chest-modal').classList.add('hidden'); if(pendingLevelUps>0) processNextLevelUp(); else { setHudVisible(true); gameState='playing'; } }
-        
-        function triggerLevelUpModal() { 
-            soundLevelUp(); gameState='level_up'; setHudVisible(false); document.getElementById('level-up-modal').classList.remove('hidden'); let c=document.getElementById('upgrade-options'); c.innerHTML=''; let p=[]; if(Object.keys(player.weapons).length<6)for(let w in WEAPON_DB)if(!player.weapons[w])p.push({n:WEAPON_DB[w].name,i:WEAPON_DB[w].icon,d:WEAPON_DB[w].desc[0],t:'新武裝',cl:'new',a:()=>{acquireWeapon(w)}}); for(let w in player.weapons){let l=player.weapons[w].level;if(l<WEAPON_DB[w].maxLevel&&!player.weapons[w].isEvolved)p.push({n:WEAPON_DB[w].name, lv:l+1, i:WEAPON_DB[w].icon,d:WEAPON_DB[w].desc[l],t:'強化',cl:'',a:()=>{upgradeWeapon(w)}});} if(Object.keys(player.passives).length<6)for(let ps in PASSIVE_DB)if(!player.passives[ps])p.push({n:PASSIVE_DB[ps].name,i:PASSIVE_DB[ps].icon,d:PASSIVE_DB[ps].desc,t:'新裝備',cl:'passive',a:()=>{acquirePassive(ps)}}); for(let ps in player.passives){let l=player.passives[ps].level;if(l<PASSIVE_DB[ps].maxLevel)p.push({n:PASSIVE_DB[ps].name, lv:l+1, i:PASSIVE_DB[ps].icon,d:PASSIVE_DB[ps].desc,t:'強化',cl:'passive',a:()=>{upgradePassive(ps)}});} if(p.length===0){p.push({n:'醫療包',i:'🍗',d:'立刻恢復 50 點生命值',t:'物資',cl:'',a:()=>{player.hp=Math.min(player.maxHp,player.hp+50)}});p.push({n:'小金庫',i:'💰',d:'獲得 25 金幣',t:'物資',cl:'',a:()=>{collectedCoins+=25;safeUpdate('ingame-coin-display',collectedCoins)}});} let ch=p.sort(()=>0.5-Math.random()).slice(0,Math.random()<0.1?4:3); ch.forEach(x=>{let d=document.createElement('div');d.className=`list-card ${x.cl==='new'?'chest':''}`;d.innerHTML=`<div class="card-icon-box">${x.i}</div><div class="card-content"><div class="card-title-row"><h3>${x.n}</h3><span class="card-tag ${x.t==='新武裝'||x.t==='新裝備'?'new':''}">${x.lv?('Lv.'+x.lv):x.t}</span></div><p class="card-desc">${x.d}</p></div>`;d.onclick=()=>{soundClick(); x.a(); document.getElementById('level-up-modal').classList.add('hidden'); processNextLevelUp();};c.appendChild(d);}); 
-        }
-
-        function checkLevelUp() { 
-            let leveled = false;
-            while(player.exp>=player.maxExp){
-                player.exp-=player.maxExp;player.level++;if(player.level===10)checkAchievement('reach_lv10');
-                if(player.level<10)player.maxExp+=5+player.level*2;else if(player.level<20)player.maxExp+=10+player.level*4;else if(player.level<40)player.maxExp+=30+player.level*8;else player.maxExp+=50+player.level*15;
-                player.maxHp+=2;player.hp=player.maxHp;pendingLevelUps++; leveled=true;
-            } 
-            if(leveled) {
-                safeUpdate('level-display',player.level);spawnParticles(worldX,worldY,'#facc15',50);
-                // 🚫 完全移除浮動的 "LEVEL UP!" 文字，只依賴彈窗，保持畫面絕對乾淨
-                enemies.forEach(e=>{if(Math.hypot(worldX-e.x,worldY-e.y)<150&&!e.isBoss&&e.type!=='elite'&&e.type!=='tank')e.hp=0;});
-                if(gameState === 'playing') processNextLevelUp();
-            }
-            document.getElementById('exp-fill').style.width=Math.min(100,(player.exp/player.maxExp*100))+'%'; 
-        }
-        
-        // 🟢 唯一保留跳字的狀況：回血
-        function addFloatingText(en,text,col) { floatTexts.push({x:en.x+(Math.random()-0.5)*10,y:en.y-20,text:text,life:40,color:col}); }
-
-        function update() {
-            if(gameState==='dying'){ deathTimer--; deathShockwaveRadius+=150; deathFlashAlpha*=0.7; for(let i=particles.length-1;i>=0;i--){particles[i].x+=particles[i].vx;particles[i].y+=particles[i].vy;particles[i].life--;particles[i].vx*=0.95;particles[i].vy*=0.95;if(particles[i].life<=0)particles.splice(i,1);} for(let i=floatTexts.length-1;i>=0;i--){floatTexts[i].y-=0.5;floatTexts[i].life--;if(floatTexts[i].life<=0)floatTexts.splice(i,1);} enemies.forEach(e=>{e.x+=Math.cos(e.angle)*e.speed*0.02;e.y+=Math.sin(e.angle)*e.speed*0.02;}); if(deathTimer<=0)gameOver(false); return; }
-            frameCount++; if(frameCount%60===0){ gameSeconds++; safeUpdate('time-display',`${String(Math.floor(gameSeconds/60)).padStart(2,'0')}:${String(gameSeconds%60).padStart(2,'0')}`); if(gameSeconds===60)checkAchievement('survive_1m'); if(gameSeconds===300)checkAchievement('survive_5m'); if(gameSeconds===300&&!bossSpawned){bossSpawned=true;spawnLeviathan();} }
-            if(player.passives.regen&&frameCount%300===0){ player.hp=Math.min(player.maxHp,player.hp+player.passives.regen.level); addFloatingText(player,"+"+player.passives.regen.level,'#4ade80'); }
-            if(frameCount%180===0&&!bossSpawned)spawnDestructible();
-            if(player.dashCd>0){ player.dashCd--; let d=document.getElementById('dash-btn'); if(d){if(player.dashCd===0){d.classList.remove('cooldown');d.innerHTML='<span>空間</span><span>摺疊</span>';}else d.innerText=Math.ceil(player.dashCd/60)+'s';} }
-            if(dashRequested&&player.dashCd===0){ soundShoot(); dashRequested=false;player.isDashing=true;player.dashTimer=15;player.dashCd=240;document.getElementById('dash-btn').classList.add('cooldown');screenShake=Math.min(screenShake+8,12); }
-            let cs=player.isDashing?player.speed*4.0:player.speed; if(player.isDashing){player.dashTimer--;if(player.dashTimer<=0)player.isDashing=false;}
-            let dx=0,dy=0; if(keys['ArrowUp']||keys['KeyW'])dy-=1;if(keys['ArrowDown']||keys['KeyS'])dy+=1;if(keys['ArrowLeft']||keys['KeyA'])dx-=1;if(keys['ArrowRight']||keys['KeyD'])dx+=1;
-            let isM=dx!==0||dy!==0||(isTouching&&(touchVector.x!==0||touchVector.y!==0));
-            if(isM){ if(dx!==0||dy!==0){let d=Math.hypot(dx,dy);player.lastFacingX=dx/d;player.lastFacingY=dy/d;}else if(isTouching){player.lastFacingX=touchVector.x;player.lastFacingY=touchVector.y;} worldX+=player.lastFacingX*cs; worldY+=player.lastFacingY*cs; player.angle=Math.atan2(player.lastFacingY,player.lastFacingX); } else if(player.isDashing){worldX+=player.lastFacingX*cs;worldY+=player.lastFacingY*cs;}
-            
-            let distC=Math.hypot(worldX,worldY), rw=document.getElementById('radiation-warning');
-            if(distC>MAP_LIMIT){if(rw)rw.style.display='flex';if(frameCount%30===0){soundHit(); player.hp-=5;player.damageFlash=5;screenShake=Math.min(screenShake+2,5);if(player.hp<=0)gameOver(false);}}else{if(rw)rw.style.display='none';}
-
-            if(player.weapons.blaster){let w=player.weapons.blaster;w.timer++;let cd=Math.max(2,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult,a=Math.atan2(player.lastFacingY,player.lastFacingX);if(w.isEvolved){for(let i=0;i<w.count;i++){let ang=a+(i*Math.PI*2/w.count)+frameCount*0.1;bullets.push({type:'blaster',isEvo:true,x:worldX,y:worldY,vx:Math.cos(ang)*s,vy:Math.sin(ang)*s,life:40*globalDurationMult,damage:d});}}else{let sa=a-(w.count-1)*0.1;for(let i=0;i<w.count;i++){let ang=sa+i*0.2;bullets.push({type:'blaster',x:worldX,y:worldY,vx:Math.cos(ang)*s,vy:Math.sin(ang)*s,life:30*globalDurationMult,damage:d});}}}}
-            if(player.weapons.laser&&enemies.length>0){let w=player.weapons.laser;w.timer++;let cd=Math.max(2,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult;if(w.isEvolved){for(let i=0;i<2;i++){if(enemies.length>0){let t=enemies[Math.floor(Math.random()*enemies.length)];bullets.push({type:'laser_evo',x:t.x,y:t.y,vx:0,vy:0,life:10*globalDurationMult,damage:d,aoe:w.baseAoe*globalAreaMult});}}}else{let c=null,md=Infinity;enemies.forEach(e=>{let dist=Math.hypot(e.x-worldX,e.y-worldY);if(dist<md){md=dist;c=e;}});if(c&&md<600){let a=Math.atan2(c.y-worldY,c.x-worldX);bullets.push({type:'laser',x:worldX,y:worldY,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:40*globalDurationMult,damage:d});}}}}
-            if(player.weapons.plasma){let w=player.weapons.plasma;w.timer++;let cd=Math.max(10,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult,aoe=w.baseAoe*globalAreaMult;if(w.isEvolved){bullets.push({type:'plasma',isEvo:true,x:worldX,y:worldY,vx:Math.cos(player.angle)*s,vy:Math.sin(player.angle)*s,life:120*globalDurationMult,damage:d,aoe:aoe});}else{for(let i=0;i<w.count;i++){let a=Math.random()*Math.PI*2;bullets.push({type:'plasma',x:worldX,y:worldY,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:60*globalDurationMult,damage:d,aoe:aoe});}}}}
-            if(player.weapons.bomb){let w=player.weapons.bomb;w.timer++;let cd=Math.max(20,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult,aoe=w.baseAoe*globalAreaMult;if(w.isEvolved){bullets.push({type:'bomb',isEvo:true,x:worldX,y:worldY,vx:Math.cos(player.angle)*s*0.5,vy:Math.sin(player.angle)*s*0.5,life:60*globalDurationMult,damage:d,aoe:aoe});}else{for(let i=0;i<w.count;i++){let a=player.angle+(Math.random()-0.5);bullets.push({type:'bomb',x:worldX,y:worldY,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:30+Math.random()*20,damage:d,aoe:aoe});}}}}
-            if(player.weapons.blade){let w=player.weapons.blade;w.timer++;let cd=Math.max(10,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;soundShoot();let d=w.baseDamage*globalDmgMult,s=w.baseSpeed*globalProjSpeedMult,aoe=w.baseAoe*globalAreaMult,a=Math.atan2(player.lastFacingY,player.lastFacingX);bullets.push({type:'blade',isEvo:w.isEvolved,x:worldX,y:worldY,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:10*globalDurationMult,damage:d,aoe:aoe,angle:a});}}
-            if(player.weapons.mine){let w=player.weapons.mine;w.timer++;let cd=Math.max(20,Math.floor(w.baseCooldown*globalCdMult));if(w.timer>=cd){w.timer=0;let d=w.baseDamage*globalDmgMult,aoe=w.baseAoe*globalAreaMult;for(let i=0;i<w.count;i++){let ox=(Math.random()-0.5)*40,oy=(Math.random()-0.5)*40;bullets.push({type:'mine',isEvo:w.isEvolved,x:worldX+ox,y:worldY+oy,vx:0,vy:0,life:120*globalDurationMult,damage:d,aoe:aoe});}}}
-            
-            const orbitals=[]; if(player.weapons.drone){let w=player.weapons.drone, s=w.baseSpeed*globalProjSpeedMult, r=w.baseRadius*globalAreaMult, os=frameCount*s; for(let i=0;i<w.count;i++)orbitals.push({x:worldX+Math.cos(os+(Math.PI*2/w.count)*i)*r,y:worldY+Math.sin(os+(Math.PI*2/w.count)*i)*r});}
-
-            let spI=30; if(gameSeconds>=30)spI=20; if(gameSeconds>=60)spI=15; if(gameSeconds>=120)spI=10; if(gameSeconds>=180)spI=8; if(gameSeconds>=240)spI=5;
-            if(gameSeconds<300&&!bossSpawned){if(frameCount%spI===0)spawnEnemyBatch();}
-
-            for(let i=bullets.length-1;i>=0;i--){
-                let b=bullets[i]; b.x+=b.vx;b.y+=b.vy;b.life--;
-                if(b.type==='bomb'&&!b.isEvo)b.vy+=0.2;
-                if(b.type==='blade'){b.x+=dx*cs*0.5;b.y+=dy*cs*0.5;}
-                if((b.type==='bomb'||b.type==='mine')&&b.life<=0){ let c=b.type==='mine'?'#f59e0b':(b.isEvo?'#22c55e':'#f43f5e'); spawnParticles(b.x,b.y,c,b.isEvo?60:20); if(b.isEvo)screenShake=Math.min(screenShake+10,20); enemies.forEach(e=>{if(Math.hypot(b.x-e.x,b.y-e.y)<b.aoe){e.hp-=b.damage;e.damageFlash=6; soundHit();}}); bullets.splice(i,1); continue; }
-                if(b.life<=0)bullets.splice(i,1);
-            }
-            for(let i=particles.length-1;i>=0;i--){particles[i].x+=particles[i].vx;particles[i].y+=particles[i].vy;particles[i].life--;particles[i].vx*=0.92;particles[i].vy*=0.92;if(particles[i].life<=0)particles.splice(i,1);}
-            for(let i=destructibles.length-1;i>=0;i--){
-                let d=destructibles[i], isH=false;
-                for(let j=bullets.length-1;j>=0;j--){if(bullets[j].type==='bomb'||bullets[j].type==='mine')continue;if(Math.hypot(bullets[j].x-d.x,bullets[j].y-d.y)<d.size+(bullets[j].aoe||15)){isH=true;if(!bullets[j].isEvo&&bullets[j].type!=='laser_evo'&&bullets[j].type!=='blade')bullets.splice(j,1);break;}}
-                if(!isH&&player.weapons.drone)orbitals.forEach(o=>{if(Math.hypot(o.x-d.x,o.y-d.y)<d.size+15)isH=true;});
-                if(!isH&&player.weapons.aura)if(Math.hypot(worldX-d.x,worldY-d.y)<player.weapons.aura.baseRadius*globalAreaMult+d.size)isH=true;
-                if(isH){ soundHit(); spawnParticles(d.x,d.y,'#38bdf8',15); let r=Math.random(); if(r<0.2)consumables.push({type:'heal',x:d.x,y:d.y}); else if(r<0.3)consumables.push({type:'bomb',x:d.x,y:d.y}); else if(r<0.4)consumables.push({type:'magnet',x:d.x,y:d.y}); else coinsArr.push({x:d.x,y:d.y,value:10}); destructiblesDestroyed++; if(destructiblesDestroyed>=20)checkAchievement('destroy_20'); destructibles.splice(i,1); }
-            }
-
-            let dt=0, cw=canvas.width, ch=canvas.height, respD=Math.max(cw,ch)+150;
-            for(let i=enemies.length-1;i>=0;i--){
-                let e=enemies[i];
-                // 💥 Boids 實體排斥
-                for(let k=1;k<=3;k++){if(i-k>=0){let o=enemies[i-k], d=Math.hypot(e.x-o.x,e.y-o.y), md=(e.size+o.size)*0.8; if(d>0&&d<md){let ov=(md-d)*0.5, nx=(e.x-o.x)/d, ny=(e.y-o.y)/d; e.x+=nx*ov; e.y+=ny*ov; o.x-=nx*ov; o.y-=ny*ov;}}}
-                // 🔄 超空間動態重置
-                if(Math.hypot(worldX-e.x,worldY-e.y)>respD && !e.isBoss){ let a=Math.random()*Math.PI*2; if(dx!==0||dy!==0)a=Math.atan2(dy,dx)+(Math.random()-0.5)*Math.PI; let r=Math.max(cw,ch)/2+100; e.x=worldX+Math.cos(a)*r; e.y=worldY+Math.sin(a)*r; }
-
-                if(e.type==='leviathan'){let ex=worldX-e.x,ey=worldY-e.y,d=Math.hypot(ex,ey);if(d>200){e.x+=(ex/d)*e.speed;e.y+=(ey/d)*e.speed;}e.angle+=e.rotSpeed;e.actionTimer++;if(e.actionTimer>=180){e.actionTimer=0;screenShake=20;for(let b=0;b<12;b++){let ba=(b/12)*Math.PI*2+e.angle;enemies.push({type:'boss_bullet',isBoss:false,x:e.x,y:e.y,size:8,speed:4,hp:1,maxHp:1,angle:ba,rotSpeed:0,vertices:[{a:0,r:1},{a:2,r:1},{a:4,r:1}],knockbackX:Math.cos(ba)*4,knockbackY:Math.sin(ba)*4,damageFlash:0,color:'#ef4444',kbResist:1});}}}else if(e.type==='boss_bullet'){e.x+=e.knockbackX;e.y+=e.knockbackY;}else{if(e.type==='charger'){e.actionTimer++;if(e.actionTimer<60){e.x+=Math.cos(e.angle)*e.speed;e.y+=Math.sin(e.angle)*e.speed;}else if(e.actionTimer===60)e.angle=Math.atan2(worldY-e.y,worldX-e.x);else if(e.actionTimer>80)e.actionTimer=0;}else{let ex=worldX-e.x,ey=worldY-e.y,d=Math.hypot(ex,ey);if(d>0){e.x+=(ex/d)*e.speed+e.knockbackX;e.y+=(ey/d)*e.speed+e.knockbackY;}e.angle+=e.rotSpeed;}}
-                e.knockbackX*=0.85;e.knockbackY*=0.85;if(e.damageFlash>0)e.damageFlash--;
-                if(player.isDashing){if(!e.isBoss&&e.type!=='death'&&Math.hypot(worldX-e.x,worldY-e.y)<player.size+e.size+15){e.hp=0;spawnParticles(e.x,e.y,'#a78bfa',5); soundHit();}}else if(player.invincibleTimer<=0&&Math.hypot(worldX-e.x,worldY-e.y)<player.size+e.size-5){let d=10;if(e.type==='splitter')d=15;if(e.type==='tank')d=20;if(e.type==='charger')d=25;if(e.type==='elite')d=30;if(e.type==='boss_bullet')d=40;if(e.type==='death'||e.type==='leviathan')d=9999;dt=Math.max(dt,d);}
-                if(player.weapons.aura){let w=player.weapons.aura,r=w.baseRadius*globalAreaMult;if(Math.hypot(e.x-worldX,e.y-worldY)<r+e.size){if(frameCount%Math.max(1,Math.floor(w.baseTickRate*globalCdMult))===0){e.hp-=w.baseDamage*globalDmgMult;let aa=Math.atan2(e.y-worldY,e.x-worldX);e.knockbackX+=Math.cos(aa)*0.5*e.kbResist;e.knockbackY+=Math.sin(aa)*0.5*e.kbResist;e.damageFlash=8; screenShake=Math.max(screenShake,2);soundHit();}}}
-                if(player.weapons.drone){let w=player.weapons.drone;orbitals.forEach(o=>{if(Math.hypot(o.x-e.x,o.y-e.y)<e.size+15){if(!e.droneCd||e.droneCd<=0){e.hp-=w.baseDamage*globalDmgMult;e.damageFlash=8;let ka=Math.atan2(e.y-o.y,e.x-o.x);e.knockbackX+=Math.cos(ka)*4*e.kbResist;e.knockbackY+=Math.sin(ka)*4*e.kbResist;spawnParticles(o.x,o.y,w.isEvolved?'#c084fc':'#facc15',3);screenShake=Math.max(screenShake,3);e.droneCd=Math.max(10,Math.floor(15*globalCdMult));soundHit();}}});if(e.droneCd>0)e.droneCd--;}
-
-                for(let j=bullets.length-1;j>=0;j--){
-                    if(bullets[j].type==='bomb'||bullets[j].type==='mine')continue;let hr=bullets[j].aoe||15;
-                    if(Math.hypot(bullets[j].x-e.x,bullets[j].y-e.y)<e.size+hr){
-                        let ba=Math.atan2(bullets[j].vy,bullets[j].vx);
-                        if(bullets[j].type==='plasma'){
-                            if(!bullets[j].isEvo){spawnParticles(bullets[j].x,bullets[j].y,'#d946ef',10);let ar=bullets[j].aoe;enemies.forEach(e2=>{if(Math.hypot(bullets[j].x-e2.x,bullets[j].y-e2.y)<ar){e2.hp-=bullets[j].damage;let ea=Math.atan2(e2.y-bullets[j].y,e2.x-bullets[j].x);e2.knockbackX+=Math.cos(ea)*4*e2.kbResist;e2.knockbackY+=Math.sin(ea)*4*e2.kbResist;e2.damageFlash=6; soundHit();}});bullets.splice(j,1);screenShake=Math.max(screenShake,5);}
-                            else{if(frameCount%10===0){spawnParticles(e.x,e.y,'#d946ef',2);e.hp-=bullets[j].damage;let ea=Math.atan2(e.y-bullets[j].y,e.x-bullets[j].x);e.knockbackX+=Math.cos(ea)*0.5*e.kbResist;e.knockbackY+=Math.sin(ea)*0.5*e.kbResist;e.damageFlash=8; screenShake=Math.max(screenShake,2);soundHit();}}
-                        }
-                        else if(bullets[j].type==='laser_evo'){e.hp-=bullets[j].damage;e.damageFlash=8;spawnParticles(e.x,e.y,'#38bdf8',5); screenShake=Math.max(screenShake,2);soundHit();}
-                        else if(bullets[j].type==='blade'){if(frameCount%5===0){e.hp-=bullets[j].damage;e.damageFlash=8;e.knockbackX+=Math.cos(bullets[j].angle)*3*e.kbResist;e.knockbackY+=Math.sin(bullets[j].angle)*3*e.kbResist;spawnParticles(e.x,e.y,'#fbbf24',3); screenShake=Math.max(screenShake,3);soundHit();}}
-                        else{e.hp-=bullets[j].damage;let col=bullets[j].type==='blaster'?'#facc15':'#38bdf8',kf=bullets[j].type==='blaster'?3:1;e.knockbackX+=Math.cos(ba)*kf*e.kbResist;e.knockbackY+=Math.sin(ba)*kf*e.kbResist;e.damageFlash=8;spawnParticles(bullets[j].x,bullets[j].y,col,3); if(!bullets[j].isEvo)bullets.splice(j,1);screenShake=Math.max(screenShake,2);soundHit();}
-                    }
-                }
-                if(e.hp<=0&&e.type!=='death'){
-                    if(e.type==='leviathan'){checkAchievement('survive_5m');gameOver(true);return;}
-                    if(e.type==='elite'||e.type==='tank')spawnParticles(e.x,e.y,'#ef4444',8);
-                    if(e.type==='elite'){checkAchievement('kill_elite');consumables.push({type:'chest',x:e.x,y:e.y});screenShake=Math.min(screenShake+8,15);}
-                    else if(e.type==='splitter'){let c=2+Math.floor(Math.random()*2);for(let s=0;s<c;s++){let sa=Math.random()*Math.PI*2,v=[];for(let vi=0;vi<5;vi++)v.push({a:(vi/5)*Math.PI*2,r:0.7+Math.random()*0.3});enemies.push({type:'minion',isBoss:false,x:e.x+Math.cos(sa)*5,y:e.y+Math.sin(sa)*5,size:8+Math.random()*3,speed:e.speed*1.5,hp:5,maxHp:5,angle:0,rotSpeed:0.1,vertices:v,knockbackX:Math.cos(sa)*10,knockbackY:Math.sin(sa)*10,damageFlash:0,color:'#1e293b',kbResist:1,actionTimer:0,droneCd:0});}gems.push({x:e.x,y:e.y,value:5,type:'green',isMoving:false,speed:0});}
-                    else if(e.type==='tank'||e.type==='charger'){if(Math.random()<0.5)gems.push({x:e.x,y:e.y,value:15,type:'red',isMoving:false,speed:0});else gems.push({x:e.x,y:e.y,value:5,type:'green',isMoving:false,speed:0});}
-                    else{if(Math.random()<0.6){let gv=1,gt='blue';if(Math.random()<0.15){gv=5;gt='green';}if(Math.random()<0.05){gv=15;gt='red';}gems.push({x:e.x,y:e.y,value:gv,type:gt,isMoving:false,speed:0});}}
-                    enemies.splice(i,1);score++;safeUpdate('score-display',score);
-                }
-            }
-            if(player.invincibleTimer>0)player.invincibleTimer--;
-            if(dt>0){soundHit(); player.hp-=dt;player.damageFlash=10;player.invincibleTimer=30;screenShake=Math.min(screenShake+10,20);if(player.hp<=0&&gameState==='playing'){gameState='dying';deathTimer=15;screenShake=120;deathShockwaveRadius=1;deathFlashAlpha=1;document.getElementById('game-ui').classList.add('hidden');spawnParticles(worldX,worldY,'#38bdf8',150);spawnParticles(worldX,worldY,'#facc15',100);spawnParticles(worldX,worldY,'#ef4444',100);return;}}
-            if(player.damageFlash>0)player.damageFlash--;
-            for(let i=gems.length-1;i>=0;i--){let g=gems[i];if(!g.isMoving&&Math.hypot(worldX-g.x,worldY-g.y)<player.pickupRadius){g.isMoving=true;g.speed=1;}if(g.isMoving){g.speed=Math.min(25,g.speed*1.15);let a=Math.atan2(worldY-g.y,worldX-g.x);g.x+=Math.cos(a)*g.speed;g.y+=Math.sin(a)*g.speed;if(Math.hypot(worldX-g.x,worldY-g.y)<player.size+15){player.exp+=g.value;gems.splice(i,1);soundGem();checkLevelUp();}}}
-            for(let i=coinsArr.length-1;i>=0;i--){let c=coinsArr[i];if(!c.isMoving&&Math.hypot(worldX-c.x,worldY-c.y)<player.pickupRadius){c.isMoving=true;c.speed=1;}if(c.isMoving){c.speed=Math.min(25,c.speed*1.15);let a=Math.atan2(worldY-c.y,worldX-c.x);c.x+=Math.cos(a)*c.speed;c.y+=Math.sin(a)*c.speed;if(Math.hypot(worldX-c.x,worldY-c.y)<player.size+15){collectedCoins+=c.value;safeUpdate('ingame-coin-display',collectedCoins);coinsArr.splice(i,1);soundGem();}}}
-            for(let i=consumables.length-1;i>=0;i--){let c=consumables[i],d=Math.hypot(worldX-c.x,worldY-c.y);if(d<player.pickupRadius){c.x+=Math.cos(Math.atan2(worldY-c.y,worldX-c.x))*18;c.y+=Math.sin(Math.atan2(worldY-c.y,worldX-c.x))*18;if(d<player.size+20){soundLevelUp(); if(c.type==='heal'){player.hp=Math.min(player.maxHp,player.hp+50);addFloatingText(player,"+50 HP",'#4ade80');}if(c.type==='bomb'){spawnParticles(worldX,worldY,'#f43f5e',80);screenShake=Math.min(screenShake+30,40);enemies.forEach(e=>{if(e.isBoss||e.type==='death'||e.type==='leviathan'){e.hp-=500;e.damageFlash=10;}else e.hp=0;});}if(c.type==='magnet'){gems.forEach(g=>{g.x=worldX;g.y=worldY;});}if(c.type==='chest')triggerChestAnimation();consumables.splice(i,1);}}}
-        }
-
-        function drawRadarPointer(tX,tY,c) { let dx=tX-worldX, dy=tY-worldY, d=Math.hypot(dx,dy); if(d>Math.max(canvas.width,canvas.height)/2){let a=Math.atan2(dy,dx), hw=canvas.width/2-30, hh=canvas.height/2-30, sc=Math.min(hw/Math.abs(Math.cos(a)),hh/Math.abs(Math.sin(a))); ctx.save(); ctx.translate(canvas.width/2+Math.cos(a)*sc,canvas.height/2+Math.sin(a)*sc); ctx.rotate(a); ctx.globalAlpha=0.5+Math.sin(frameCount*0.1)*0.5; ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(15,0); ctx.lineTo(-10,10); ctx.lineTo(-5,0); ctx.lineTo(-10,-10); ctx.closePath(); ctx.fill(); ctx.restore(); } }
-        function drawPlayerShip(cId,isD,dF) { ctx.fillStyle=dF>0?'#ef4444':(isD?'#a78bfa':'#e2e8f0'); ctx.strokeStyle=dF>0?'#fca5a5':'#38bdf8'; ctx.lineWidth=2; ctx.beginPath(); if(cId==='heavy'){ctx.moveTo(14,10);ctx.lineTo(-12,14);ctx.lineTo(-12,-14);ctx.lineTo(14,-10);ctx.closePath();ctx.moveTo(0,-6);ctx.lineTo(20,-2);ctx.lineTo(20,2);ctx.lineTo(0,6);}else if(cId==='scout'){ctx.moveTo(22,0);ctx.lineTo(-8,8);ctx.lineTo(-16,20);ctx.lineTo(-4,0);ctx.lineTo(-16,-20);ctx.lineTo(-8,-8);ctx.closePath();}else if(cId==='engineer'){ctx.arc(0,0,12,0,Math.PI*2);ctx.moveTo(16,-4);ctx.lineTo(16,4);ctx.moveTo(-16,-4);ctx.lineTo(-16,4);}else if(cId==='ghost'){ctx.arc(4,0,16,Math.PI*0.2,Math.PI*1.8,true);ctx.quadraticCurveTo(-10,0,4,15);}else if(cId==='scavenger'){ctx.moveTo(16,0);ctx.lineTo(-10,12);ctx.lineTo(-4,0);ctx.lineTo(-14,-10);ctx.lineTo(4,-8);ctx.closePath();}else{ctx.moveTo(18,0);ctx.lineTo(-12,14);ctx.lineTo(-6,0);ctx.lineTo(-12,-14);ctx.closePath();} ctx.fill();ctx.stroke(); if(keys['ArrowUp']||keys['KeyW']||keys['ArrowDown']||keys['KeyS']||keys['ArrowLeft']||keys['KeyA']||keys['ArrowRight']||keys['KeyD']||isTouching||isD){ctx.fillStyle=isD?'#d946ef':'#f97316';ctx.beginPath();if(cId==='heavy'){ctx.moveTo(-12,-8);ctx.lineTo(-20-Math.random()*10,-8);ctx.lineTo(-12,-4);ctx.moveTo(-12,8);ctx.lineTo(-20-Math.random()*10,8);ctx.lineTo(-12,4);}else if(cId==='engineer'){ctx.arc(0,0,14+Math.random()*4,Math.PI*0.7,Math.PI*1.3);}else if(cId==='scavenger'){ctx.moveTo(-4,-3);ctx.lineTo(-18-Math.random()*(isD?15:5),0);ctx.lineTo(-4,3);}else{ctx.moveTo(-7,-4);ctx.lineTo(-18-Math.random()*(isD?15:5),0);ctx.lineTo(-7,4);}ctx.fill();} }
-
-        function draw() {
-            if(['splash','title','menu','char_select','stage_select','shop','achievements'].includes(gameState))return;
-            const bgH=STAGES[selectedStageIndex].bgHue||280; ctx.fillStyle='#020205'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.save(); if(screenShake>0){ctx.translate((Math.random()-0.5)*screenShake,(Math.random()-0.5)*screenShake);screenShake*=0.9;if(screenShake<0.5)screenShake=0;}
-            let dwX=(gameState==='playing'||gameState==='paused'||gameState==='level_up'||gameState==='chest'||gameState==='dying')?worldX:frameCount*0.5;
-            let dwY=(gameState==='playing'||gameState==='paused'||gameState==='level_up'||gameState==='chest'||gameState==='dying')?worldY:frameCount*0.2;
-            
-            ctx.globalCompositeOperation='lighter'; nebulas.forEach(n=>{let nx=(n.x-dwX*n.depth)%4000,ny=(n.y-dwY*n.depth)%4000;if(nx<-1000)nx+=4000;if(ny<-1000)ny+=4000;if(!isNaN(nx)&&!isNaN(ny)&&!isNaN(n.radius)){let g=ctx.createRadialGradient(nx,ny,0,nx,ny,Math.max(1,n.radius));g.addColorStop(0,`hsla(${bgH},80%,50%,0.08)`);g.addColorStop(1,`hsla(${bgH},80%,50%,0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(nx,ny,Math.max(1,n.radius),0,Math.PI*2);ctx.fill();}}); ctx.globalCompositeOperation='source-over';
-            ctx.save(); ctx.strokeStyle='rgba(239,68,68,0.15)'; ctx.lineWidth=40; ctx.beginPath(); ctx.arc(-dwX+canvas.width/2,-dwY+canvas.height/2,MAP_LIMIT,0,Math.PI*2); ctx.stroke();
-            ctx.strokeStyle='rgba(239,68,68,0.6)'; ctx.lineWidth=4; ctx.setLineDash([20,20]); ctx.translate(-dwX+canvas.width/2,-dwY+canvas.height/2); ctx.rotate(frameCount*0.001); ctx.beginPath(); ctx.arc(0,0,MAP_LIMIT,0,Math.PI*2); ctx.stroke(); ctx.restore();
-            ctx.fillStyle='rgba(255,255,255,0.7)'; stars.forEach(s=>{let sx=(s.x-dwX*s.depth)%canvas.width,sy=(s.y-dwY*s.depth)%canvas.height;if(sx<0)sx+=canvas.width;if(sy<0)sy+=canvas.height;if(!isNaN(sx)&&!isNaN(sy)){ctx.beginPath();ctx.arc(sx,sy,Math.max(0.1,s.size),0,Math.PI*2);ctx.fill();}});
-            
-            if(['playing','paused','gameover','level_up','chest','dying'].includes(gameState)){
-                ctx.strokeStyle='#38bdf8'; ctx.lineWidth=2; ctx.fillStyle='rgba(15,23,42,0.8)';
-                destructibles.forEach(d=>{let p=getScreenPos(d.x,d.y);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(frameCount*0.02);ctx.beginPath();ctx.rect(-10,-10,20,20);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(-6,-6);ctx.lineTo(6,6);ctx.moveTo(6,-6);ctx.lineTo(-6,6);ctx.stroke();ctx.restore();});
-                consumables.forEach(c=>{let p=getScreenPos(c.x,c.y);ctx.font='24px Arial';ctx.textAlign='center';ctx.textBaseline='middle';if(c.type==='heal')ctx.fillText('🍗',p.x,p.y);if(c.type==='bomb')ctx.fillText('💣',p.x,p.y);if(c.type==='magnet')ctx.fillText('🧲',p.x,p.y);if(c.type==='chest'){ctx.shadowBlur=20;ctx.shadowColor='#facc15';ctx.fillText('📦',p.x,p.y+Math.sin(frameCount*0.1)*5);ctx.shadowBlur=0;}});
-                gems.forEach(g=>{let p=getScreenPos(g.x,g.y);if(p.x>-10&&p.x<canvas.width+10&&p.y>-10&&p.y<canvas.height+10){ctx.fillStyle=g.type==='red'?'#f87171':(g.type==='green'?'#34d399':'#38bdf8');ctx.beginPath();ctx.moveTo(p.x,p.y-5);ctx.lineTo(p.x+3,p.y-1);ctx.lineTo(p.x+7,p.y);ctx.lineTo(p.x+3,p.y+1);ctx.lineTo(p.x,p.y+5);ctx.lineTo(p.x-3,p.y+1);ctx.lineTo(p.x-7,p.y);ctx.lineTo(p.x-3,p.y-1);ctx.closePath();ctx.fill();}});
-                coinsArr.forEach(c=>{let p=getScreenPos(c.x,c.y);ctx.fillStyle='#facc15';ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ca8a04';ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});
-                enemies.forEach(en=>{let p=getScreenPos(en.x,en.y);if(p.x>-100&&p.x<canvas.width+100&&p.y>-100&&p.y<canvas.height+100){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(en.angle);if(en.damageFlash>0){ctx.fillStyle='#fff';ctx.strokeStyle='#f87171';}else{ctx.fillStyle=en.color;ctx.strokeStyle=(en.type==='elite'?'#f87171':(en.type==='leviathan'?'#fbbf24':'#64748b'));}ctx.lineWidth=(en.type==='elite'||en.type==='leviathan')?3:2;ctx.beginPath();en.vertices.forEach((v,idx)=>{let px=Math.cos(v.a)*en.size*v.r,py=Math.sin(v.a)*en.size*v.r;if(idx===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});ctx.closePath();ctx.fill();ctx.stroke();if(en.type==='leviathan'){ctx.beginPath();ctx.arc(0,0,en.size*0.4,0,Math.PI*2);ctx.fillStyle='#ef4444';ctx.fill();}ctx.restore();}});
-                if(player.weapons.aura){let w=player.weapons.aura,r=w.baseRadius*globalAreaMult;ctx.fillStyle=w.isEvolved?'rgba(236,72,153,0.15)':'rgba(217,70,239,0.1)';ctx.strokeStyle=w.isEvolved?'rgba(236,72,153,0.4)':'rgba(217,70,239,0.3)';ctx.lineWidth=w.isEvolved?4:2;ctx.beginPath();ctx.arc(canvas.width/2,canvas.height/2,r,0,Math.PI*2);ctx.fill();ctx.stroke();}
-                particles.forEach(p=>{let pos=getScreenPos(p.x,p.y);ctx.globalAlpha=Math.max(0,p.life/p.maxLife);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(pos.x,pos.y,Math.max(0.1,p.size),0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1.0;
-                
-                if(player.weapons.drone){let w=player.weapons.drone,s=w.baseSpeed*globalProjSpeedMult,r=w.baseRadius*globalAreaMult,os=frameCount*s;ctx.fillStyle=w.isEvolved?'#a78bfa':'#facc15';for(let i=0;i<w.count;i++){let p=getScreenPos(worldX+Math.cos(os+(Math.PI*2/w.count)*i)*r,worldY+Math.sin(os+(Math.PI*2/w.count)*i)*r);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(os+(Math.PI*2/w.count)*i);ctx.beginPath();if(w.isEvolved){ctx.moveTo(10,0);ctx.lineTo(0,6);ctx.lineTo(-10,0);ctx.lineTo(0,-6);}else{ctx.moveTo(8,0);ctx.lineTo(0,5);ctx.lineTo(-8,0);ctx.lineTo(0,-5);}ctx.closePath();ctx.fill();ctx.restore();}if(w.isEvolved){ctx.strokeStyle='rgba(167,139,250,0.2)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(canvas.width/2,canvas.height/2,r,0,Math.PI*2);ctx.stroke();}}
-                bullets.forEach(b=>{
-                    let p=getScreenPos(b.x,b.y);
-                    if(b.type==='plasma'){
+            for(let j=bullets.length-1;j>=0;j--){
+                if(bullets[j].type==='bomb'||bullets[j].type==='mine')continue;let hr=bullets[j].aoe||15;
+                if(Math.hypot(bullets[j].x-e.x,bullets[j].y-e.y)<e.size+hr){
+                    let ba=Math.atan2(bullets[j].vy,bullets[j].vx);
+                    if(bullets[j].type==='plasma'){
                         if(b.isEvo){
                             ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(frameCount*0.01);
                             ctx.globalCompositeOperation = 'screen';
@@ -606,31 +575,113 @@
                         }else{
                             ctx.fillStyle='#d946ef'; ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2); ctx.fill();
                         }
-                    }else if(b.type==='laser_evo'){ctx.fillStyle='rgba(56,189,248,0.6)';ctx.beginPath();ctx.arc(p.x,p.y,Math.max(0.1,b.aoe),0,Math.PI*2);ctx.fill();
-                    }else if(b.type==='blaster'){ctx.strokeStyle=b.isEvo?'#fbbf24':'#facc15';ctx.lineWidth=b.isEvo?4:3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-b.vx*1.5,p.y-b.vy*1.5);ctx.stroke();
-                    }else if(b.type==='bomb'||b.type==='mine'){ctx.fillStyle=b.isEvo?'#22c55e':(b.type==='mine'?'#f59e0b':'#f43f5e');ctx.beginPath();ctx.arc(p.x,p.y,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x-2,p.y-2,3,0,Math.PI*2);ctx.fill();
-                    }else if(b.type==='blade'){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(b.angle);ctx.fillStyle=b.isEvo?'rgba(250,204,21,0.8)':'rgba(56,189,248,0.8)';ctx.beginPath();ctx.arc(0,0,Math.max(0.1,b.aoe),-Math.PI/3,Math.PI/3);ctx.lineTo(0,0);ctx.fill();ctx.restore();
-                    }else{ctx.strokeStyle='#38bdf8';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-b.vx*2,p.y-b.vy*2);ctx.stroke();}
-                });
-                
-                if(gameState!=='dying'){
-                    enemies.forEach(e=>{if(e.type==='elite'||e.isBoss)drawRadarPointer(e.x,e.y,'#f87171');}); consumables.forEach(c=>{if(c.type==='chest')drawRadarPointer(c.x,c.y,'#facc15');});
-                    ctx.save(); ctx.translate(canvas.width/2,canvas.height/2); ctx.rotate(Math.atan2(player.lastFacingY,player.lastFacingX)); if(player.invincibleTimer>0&&Math.floor(frameCount/5)%2===0)ctx.globalAlpha=0.5; drawPlayerShip(CHARACTERS[selectedCharIndex].id,player.isDashing,player.damageFlash); ctx.globalAlpha=1.0; ctx.restore();
-                    ctx.strokeStyle='rgba(56,189,248,0.05)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(canvas.width/2,canvas.height/2,player.pickupRadius,0,Math.PI*2); ctx.stroke();
-                    let shp=Math.min(1,Math.max(0,(player.hp>0?player.hp:0)/(player.maxHp>0?player.maxHp:100))); ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(canvas.width/2-25,canvas.height/2+25,50,6); ctx.fillStyle=shp>0.5?'#4ade80':(shp>0.25?'#facc15':'#ef4444'); ctx.fillRect(canvas.width/2-25,canvas.height/2+25,50*shp,6); ctx.strokeStyle='#1e293b'; ctx.lineWidth=1; ctx.strokeRect(canvas.width/2-25,canvas.height/2+25,50,6);
-                    if(isTouching&&joystickOrigin&&joystickCurrent&&gameState==='playing'){ctx.fillStyle='rgba(255,255,255,0.1)';ctx.beginPath();ctx.arc(joystickOrigin.x,joystickOrigin.y,40,0,Math.PI*2);ctx.fill();let d=Math.hypot(joystickCurrent.x-joystickOrigin.x,joystickCurrent.y-joystickOrigin.y),rx=joystickOrigin.x+(d>0?((joystickCurrent.x-joystickOrigin.x)/d)*Math.min(d,40):0),ry=joystickOrigin.y+(d>0?((joystickCurrent.y-joystickOrigin.y)/d)*Math.min(d,40):0);ctx.fillStyle='rgba(56,189,248,0.5)';ctx.beginPath();ctx.arc(rx,ry,15,0,Math.PI*2);ctx.fill();}
+                    }else if(bullets[j].type==='laser_evo'){e.hp-=bullets[j].damage;e.damageFlash=8;spawnParticles(e.x,e.y,'#38bdf8',5); screenShake=Math.max(screenShake,2);soundHit();}
+                    else if(bullets[j].type==='blade'){if(frameCount%5===0){e.hp-=bullets[j].damage;e.damageFlash=8;e.knockbackX+=Math.cos(bullets[j].angle)*3*e.kbResist;e.knockbackY+=Math.sin(bullets[j].angle)*3*e.kbResist;spawnParticles(e.x,e.y,'#fbbf24',3); screenShake=Math.max(screenShake,3);soundHit();}}
+                    else{e.hp-=bullets[j].damage;let col=bullets[j].type==='blaster'?'#facc15':'#38bdf8',kf=bullets[j].type==='blaster'?3:1;e.knockbackX+=Math.cos(ba)*kf*e.kbResist;e.knockbackY+=Math.sin(ba)*kf*e.kbResist;e.damageFlash=8;spawnParticles(bullets[j].x,bullets[j].y,col,3); if(!bullets[j].isEvo)bullets.splice(j,1);screenShake=Math.max(screenShake,2);soundHit();}
                 }
-                ctx.font='bold 16px monospace'; ctx.textAlign='center'; floatTexts.forEach(f=>{let p=getScreenPos(f.x,f.y);ctx.globalAlpha=Math.max(0,f.life/30);ctx.fillStyle=f.color||'white';ctx.fillText(f.text,p.x,p.y-15);}); ctx.globalAlpha=1.0;
             }
-            ctx.restore();
-            if(gameState==='dying'){
-                ctx.save(); ctx.translate(canvas.width/2,canvas.height/2); ctx.beginPath(); ctx.arc(0,0,Math.max(1,deathShockwaveRadius),0,Math.PI*2); ctx.lineWidth=Math.max(1,40-deathShockwaveRadius/25); ctx.strokeStyle=`rgba(255,255,255,${Math.max(0,1-deathShockwaveRadius/1500)})`; ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,Math.max(1,deathShockwaveRadius*0.8),0,Math.PI*2); ctx.fillStyle=`rgba(239,68,68,${Math.max(0,0.4-deathShockwaveRadius/1200)})`; ctx.fill(); ctx.restore();
-                if(deathFlashAlpha>0.01){ctx.fillStyle=`rgba(255,255,255,${deathFlashAlpha})`;ctx.fillRect(0,0,canvas.width,canvas.height);} let fa=Math.max(0,Math.min(0.8,(15-deathTimer)/15)); ctx.fillStyle=`rgba(159,18,57,${fa})`; ctx.fillRect(0,0,canvas.width,canvas.height);
-                let ta=Math.max(0,Math.min(1,(15-deathTimer)/5)); ctx.font='900 48px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; let gx=deathTimer<12&&Math.random()<0.5?(Math.random()-0.5)*25:0; ctx.fillStyle=`rgba(56,189,248,${ta*0.7})`; ctx.fillText("CRITICAL DAMAGE",canvas.width/2+gx-4,canvas.height/2-50); ctx.fillStyle=`rgba(244,63,94,${ta*0.7})`; ctx.fillText("CRITICAL DAMAGE",canvas.width/2+gx+4,canvas.height/2-50); ctx.fillStyle=`rgba(255,255,255,${ta})`; ctx.shadowBlur=20; ctx.shadowColor='#e11d48'; ctx.fillText("CRITICAL DAMAGE",canvas.width/2+gx,canvas.height/2-50); ctx.shadowBlur=0; ctx.font='bold 20px sans-serif'; ctx.fillStyle=`rgba(148,163,184,${ta})`; ctx.fillText(">> CONNECTION LOST <<",canvas.width/2+gx,canvas.height/2); ctx.restore();
+            if(e.hp<=0&&e.type!=='death'){
+                if(e.type==='leviathan'){checkAchievement('survive_5m');gameOver(true);return;}
+                if(e.type==='elite'||e.type==='tank')spawnParticles(e.x,e.y,'#ef4444',8);
+                if(e.type==='elite'){checkAchievement('kill_elite');consumables.push({type:'chest',x:e.x,y:e.y});screenShake=Math.min(screenShake+8,15);}
+                else if(e.type==='splitter'){let c=2+Math.floor(Math.random()*2);for(let s=0;s<c;s++){let sa=Math.random()*Math.PI*2,v=[];for(let vi=0;vi<5;vi++)v.push({a:(vi/5)*Math.PI*2,r:0.7+Math.random()*0.3});enemies.push({type:'minion',isBoss:false,x:e.x+Math.cos(sa)*5,y:e.y+Math.sin(sa)*5,size:8+Math.random()*3,speed:e.speed*1.5,hp:5,maxHp:5,angle:0,rotSpeed:0.1,vertices:v,knockbackX:Math.cos(sa)*10,knockbackY:Math.sin(sa)*10,damageFlash:0,color:'#1e293b',kbResist:1,actionTimer:0,droneCd:0});}gems.push({x:e.x,y:e.y,value:5,type:'green',isMoving:false,speed:0});}
+                else if(e.type==='tank'||e.type==='charger'){if(Math.random()<0.5)gems.push({x:e.x,y:e.y,value:15,type:'red',isMoving:false,speed:0});else gems.push({x:e.x,y:e.y,value:5,type:'green',isMoving:false,speed:0});}
+                else{if(Math.random()<0.6){let gv=1,gt='blue';if(Math.random()<0.15){gv=5;gt='green';}if(Math.random()<0.05){gv=15;gt='red';}gems.push({x:e.x,y:e.y,value:gv,type:gt,isMoving:false,speed:0});}}
+                enemies.splice(i,1);score++;safeUpdate('score-display',score);
             }
         }
-        function gameLoop() { if(gameState==='playing'||gameState==='dying')update(); draw(); requestAnimationFrame(gameLoop); }
-        gameLoop();
-    </script>
+        if(player.invincibleTimer>0)player.invincibleTimer--;
+        if(dt>0){soundHit(); player.hp-=dt;player.damageFlash=10;player.invincibleTimer=30;screenShake=Math.min(screenShake+10,20);if(player.hp<=0&&gameState==='playing'){gameState='dying';deathTimer=15;screenShake=120;deathShockwaveRadius=1;deathFlashAlpha=1;document.getElementById('game-ui').classList.add('hidden');spawnParticles(worldX,worldY,'#38bdf8',150);spawnParticles(worldX,worldY,'#facc15',100);spawnParticles(worldX,worldY,'#ef4444',100);return;}}
+        if(player.damageFlash>0)player.damageFlash--;
+        for(let i=gems.length-1;i>=0;i--){let g=gems[i];if(!g.isMoving&&Math.hypot(worldX-g.x,worldY-g.y)<player.pickupRadius){g.isMoving=true;g.speed=1;}if(g.isMoving){g.speed=Math.min(25,g.speed*1.15);let a=Math.atan2(worldY-g.y,worldX-g.x);g.x+=Math.cos(a)*g.speed;g.y+=Math.sin(a)*g.speed;if(Math.hypot(worldX-g.x,worldY-g.y)<player.size+15){player.exp+=g.value;gems.splice(i,1);soundGem();checkLevelUp();}}}
+        for(let i=coinsArr.length-1;i>=0;i--){let c=coinsArr[i];if(!c.isMoving&&Math.hypot(worldX-c.x,worldY-c.y)<player.pickupRadius){c.isMoving=true;c.speed=1;}if(c.isMoving){c.speed=Math.min(25,c.speed*1.15);let a=Math.atan2(worldY-c.y,worldX-c.x);c.x+=Math.cos(a)*c.speed;c.y+=Math.sin(a)*c.speed;if(Math.hypot(worldX-c.x,worldY-c.y)<player.size+15){collectedCoins+=c.value;safeUpdate('ingame-coin-display',collectedCoins);coinsArr.splice(i,1);soundGem();}}}
+        for(let i=consumables.length-1;i>=0;i--){let c=consumables[i],d=Math.hypot(worldX-c.x,worldY-c.y);if(d<player.pickupRadius){c.x+=Math.cos(Math.atan2(worldY-c.y,worldX-c.x))*18;c.y+=Math.sin(Math.atan2(worldY-c.y,worldX-c.x))*18;if(d<player.size+20){soundLevelUp(); if(c.type==='heal'){player.hp=Math.min(player.maxHp,player.hp+50);}if(c.type==='bomb'){spawnParticles(worldX,worldY,'#f43f5e',80);screenShake=Math.min(screenShake+30,40);enemies.forEach(e=>{if(e.isBoss||e.type==='death'||e.type==='leviathan'){e.hp-=500;e.damageFlash=10;}else e.hp=0;});}if(c.type==='magnet'){gems.forEach(g=>{g.x=worldX;g.y=worldY;});}if(c.type==='chest')triggerChestAnimation();consumables.splice(i,1);}}}
+    }
+
+    function drawRadarPointer(tX,tY,c) { let dx=tX-worldX, dy=tY-worldY, d=Math.hypot(dx,dy); if(d>Math.max(canvas.width,canvas.height)/2){let a=Math.atan2(dy,dx), hw=canvas.width/2-30, hh=canvas.height/2-30, sc=Math.min(hw/Math.abs(Math.cos(a)),hh/Math.abs(Math.sin(a))); ctx.save(); ctx.translate(canvas.width/2+Math.cos(a)*sc,canvas.height/2+Math.sin(a)*sc); ctx.rotate(a); ctx.globalAlpha=0.5+Math.sin(frameCount*0.1)*0.5; ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(15,0); ctx.lineTo(-10,10); ctx.lineTo(-5,0); ctx.lineTo(-10,-10); ctx.closePath(); ctx.fill(); ctx.restore(); } }
+    function drawPlayerShip(cId,isD,dF) { ctx.fillStyle=dF>0?'#ef4444':(isD?'#a78bfa':'#e2e8f0'); ctx.strokeStyle=dF>0?'#fca5a5':'#38bdf8'; ctx.lineWidth=2; ctx.beginPath(); if(cId==='heavy'){ctx.moveTo(14,10);ctx.lineTo(-12,14);ctx.lineTo(-12,-14);ctx.lineTo(14,-10);ctx.closePath();ctx.moveTo(0,-6);ctx.lineTo(20,-2);ctx.lineTo(20,2);ctx.lineTo(0,6);}else if(cId==='scout'){ctx.moveTo(22,0);ctx.lineTo(-8,8);ctx.lineTo(-16,20);ctx.lineTo(-4,0);ctx.lineTo(-16,-20);ctx.lineTo(-8,-8);ctx.closePath();}else if(cId==='engineer'){ctx.arc(0,0,12,0,Math.PI*2);ctx.moveTo(16,-4);ctx.lineTo(16,4);ctx.moveTo(-16,-4);ctx.lineTo(-16,4);}else if(cId==='ghost'){ctx.arc(4,0,16,Math.PI*0.2,Math.PI*1.8,true);ctx.quadraticCurveTo(-10,0,4,15);}else if(cId==='scavenger'){ctx.moveTo(16,0);ctx.lineTo(-10,12);ctx.lineTo(-4,0);ctx.lineTo(-14,-10);ctx.lineTo(4,-8);ctx.closePath();}else{ctx.moveTo(18,0);ctx.lineTo(-12,14);ctx.lineTo(-6,0);ctx.lineTo(-12,-14);ctx.closePath();} ctx.fill();ctx.stroke(); if(keys['ArrowUp']||keys['KeyW']||keys['ArrowDown']||keys['KeyS']||keys['ArrowLeft']||keys['KeyA']||keys['ArrowRight']||keys['KeyD']||isTouching||isD){ctx.fillStyle=isD?'#d946ef':'#f97316';ctx.beginPath();if(cId==='heavy'){ctx.moveTo(-12,-8);ctx.lineTo(-20-Math.random()*10,-8);ctx.lineTo(-12,-4);ctx.moveTo(-12,8);ctx.lineTo(-20-Math.random()*10,8);ctx.lineTo(-12,4);}else if(cId==='engineer'){ctx.arc(0,0,14+Math.random()*4,Math.PI*0.7,Math.PI*1.3);}else if(cId==='scavenger'){ctx.moveTo(-4,-3);ctx.lineTo(-18-Math.random()*(isD?15:5),0);ctx.lineTo(-4,3);}else{ctx.moveTo(-7,-4);ctx.lineTo(-18-Math.random()*(isD?15:5),0);ctx.lineTo(-7,4);}ctx.fill();} }
+
+    function draw() {
+        if(['splash','title','menu','char_select','stage_select','shop','achievements'].includes(gameState))return;
+        const bgH=STAGES[selectedStageIndex].bgHue||280; ctx.fillStyle='#020205'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.save(); if(screenShake>0){ctx.translate((Math.random()-0.5)*screenShake,(Math.random()-0.5)*screenShake);screenShake*=0.9;if(screenShake<0.5)screenShake=0;}
+        let dwX=(gameState==='playing'||gameState==='paused'||gameState==='level_up'||gameState==='chest'||gameState==='dying')?worldX:frameCount*0.5;
+        let dwY=(gameState==='playing'||gameState==='paused'||gameState==='level_up'||gameState==='chest'||gameState==='dying')?worldY:frameCount*0.2;
+        
+        ctx.globalCompositeOperation='lighter'; nebulas.forEach(n=>{let nx=(n.x-dwX*n.depth)%4000,ny=(n.y-dwY*n.depth)%4000;if(nx<-1000)nx+=4000;if(ny<-1000)ny+=4000;if(!isNaN(nx)&&!isNaN(ny)&&!isNaN(n.radius)){let g=ctx.createRadialGradient(nx,ny,0,nx,ny,Math.max(1,n.radius));g.addColorStop(0,`hsla(${bgH},80%,50%,0.08)`);g.addColorStop(1,`hsla(${bgH},80%,50%,0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(nx,ny,Math.max(1,n.radius),0,Math.PI*2);ctx.fill();}}); ctx.globalCompositeOperation='source-over';
+        ctx.save(); ctx.strokeStyle='rgba(239,68,68,0.15)'; ctx.lineWidth=40; ctx.beginPath(); ctx.arc(-dwX+canvas.width/2,-dwY+canvas.height/2,MAP_LIMIT,0,Math.PI*2); ctx.stroke();
+        ctx.strokeStyle='rgba(239,68,68,0.6)'; ctx.lineWidth=4; ctx.setLineDash([20,20]); ctx.translate(-dwX+canvas.width/2,-dwY+canvas.height/2); ctx.rotate(frameCount*0.001); ctx.beginPath(); ctx.arc(0,0,MAP_LIMIT,0,Math.PI*2); ctx.stroke(); ctx.restore();
+        
+        // 🌠 繪製空降折疊的光軌特效 (Dash VFX)
+        if(player.isDashing) {
+            ctx.save(); ctx.translate(canvas.width/2, canvas.height/2); ctx.rotate(player.angle);
+            ctx.strokeStyle = 'rgba(167, 139, 250, 0.5)'; ctx.lineWidth = 2;
+            for(let i=0; i<15; i++) {
+                ctx.beginPath(); ctx.moveTo(-20 - Math.random()*80, (Math.random()-0.5)*100); ctx.lineTo(50 + Math.random()*100, (Math.random()-0.5)*100); ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        ctx.fillStyle='rgba(255,255,255,0.7)'; stars.forEach(s=>{let sx=(s.x-dwX*s.depth)%canvas.width,sy=(s.y-dwY*s.depth)%canvas.height;if(sx<0)sx+=canvas.width;if(sy<0)sy+=canvas.height;if(!isNaN(sx)&&!isNaN(sy)){ctx.beginPath();ctx.arc(sx,sy,Math.max(0.1,s.size),0,Math.PI*2);ctx.fill();}});
+        
+        if(['playing','paused','gameover','level_up','chest','dying'].includes(gameState)){
+            ctx.strokeStyle='#38bdf8'; ctx.lineWidth=2; ctx.fillStyle='rgba(15,23,42,0.8)';
+            destructibles.forEach(d=>{let p=getScreenPos(d.x,d.y);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(frameCount*0.02);ctx.beginPath();ctx.rect(-10,-10,20,20);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(-6,-6);ctx.lineTo(6,6);ctx.moveTo(6,-6);ctx.lineTo(-6,6);ctx.stroke();ctx.restore();});
+            consumables.forEach(c=>{let p=getScreenPos(c.x,c.y);ctx.font='24px Arial';ctx.textAlign='center';ctx.textBaseline='middle';if(c.type==='heal')ctx.fillText('🍗',p.x,p.y);if(c.type==='bomb')ctx.fillText('💣',p.x,p.y);if(c.type==='magnet')ctx.fillText('🧲',p.x,p.y);if(c.type==='chest'){ctx.shadowBlur=20;ctx.shadowColor='#facc15';ctx.fillText('📦',p.x,p.y+Math.sin(frameCount*0.1)*5);ctx.shadowBlur=0;}});
+            gems.forEach(g=>{let p=getScreenPos(g.x,g.y);if(p.x>-10&&p.x<canvas.width+10&&p.y>-10&&p.y<canvas.height+10){ctx.fillStyle=g.type==='red'?'#f87171':(g.type==='green'?'#34d399':'#38bdf8');ctx.beginPath();ctx.moveTo(p.x,p.y-5);ctx.lineTo(p.x+3,p.y-1);ctx.lineTo(p.x+7,p.y);ctx.lineTo(p.x+3,p.y+1);ctx.lineTo(p.x,p.y+5);ctx.lineTo(p.x-3,p.y+1);ctx.lineTo(p.x-7,p.y);ctx.lineTo(p.x-3,p.y-1);ctx.closePath();ctx.fill();}});
+            coinsArr.forEach(c=>{let p=getScreenPos(c.x,c.y);ctx.fillStyle='#facc15';ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ca8a04';ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});
+            enemies.forEach(en=>{let p=getScreenPos(en.x,en.y);if(p.x>-100&&p.x<canvas.width+100&&p.y>-100&&p.y<canvas.height+100){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(en.angle);if(en.damageFlash>0){ctx.fillStyle='#fff';ctx.strokeStyle='#f87171';}else{ctx.fillStyle=en.color;ctx.strokeStyle=(en.type==='elite'?'#f87171':(en.type==='leviathan'?'#fbbf24':'#64748b'));}ctx.lineWidth=(en.type==='elite'||en.type==='leviathan')?3:2;ctx.beginPath();en.vertices.forEach((v,idx)=>{let px=Math.cos(v.a)*en.size*v.r,py=Math.sin(v.a)*en.size*v.r;if(idx===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});ctx.closePath();ctx.fill();ctx.stroke();if(en.type==='leviathan'){ctx.beginPath();ctx.arc(0,0,en.size*0.4,0,Math.PI*2);ctx.fillStyle='#ef4444';ctx.fill();}ctx.restore();}});
+            if(player.weapons.aura){let w=player.weapons.aura,r=w.baseRadius*globalAreaMult;ctx.fillStyle=w.isEvolved?'rgba(236,72,153,0.15)':'rgba(217,70,239,0.1)';ctx.strokeStyle=w.isEvolved?'rgba(236,72,153,0.4)':'rgba(217,70,239,0.3)';ctx.lineWidth=w.isEvolved?4:2;ctx.beginPath();ctx.arc(canvas.width/2,canvas.height/2,r,0,Math.PI*2);ctx.fill();ctx.stroke();}
+            particles.forEach(p=>{let pos=getScreenPos(p.x,p.y);ctx.globalAlpha=Math.max(0,p.life/p.maxLife);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(pos.x,pos.y,Math.max(0.1,p.size),0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1.0;
+            
+            if(player.weapons.drone){let w=player.weapons.drone,s=w.baseSpeed*globalProjSpeedMult,r=w.baseRadius*globalAreaMult,os=frameCount*s;ctx.fillStyle=w.isEvolved?'#a78bfa':'#facc15';for(let i=0;i<w.count;i++){let p=getScreenPos(worldX+Math.cos(os+(Math.PI*2/w.count)*i)*r,worldY+Math.sin(os+(Math.PI*2/w.count)*i)*r);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(os+(Math.PI*2/w.count)*i);ctx.beginPath();if(w.isEvolved){ctx.moveTo(10,0);ctx.lineTo(0,6);ctx.lineTo(-10,0);ctx.lineTo(0,-6);}else{ctx.moveTo(8,0);ctx.lineTo(0,5);ctx.lineTo(-8,0);ctx.lineTo(0,-5);}ctx.closePath();ctx.fill();ctx.restore();}if(w.isEvolved){ctx.strokeStyle='rgba(167,139,250,0.2)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(canvas.width/2,canvas.height/2,r,0,Math.PI*2);ctx.stroke();}}
+            bullets.forEach(b=>{
+                let p=getScreenPos(b.x,b.y);
+                if(b.type==='plasma'){
+                    if(b.isEvo){
+                        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(frameCount*0.01);
+                        ctx.globalCompositeOperation = 'screen';
+                        let rad = Math.max(0.1, b.aoe*0.8);
+                        let grad = ctx.createRadialGradient(0,0,rad*0.2,0,0,rad);
+                        grad.addColorStop(0,'rgba(217,70,239,0.9)'); grad.addColorStop(0.6,'rgba(147,51,234,0.6)'); grad.addColorStop(1,'rgba(0,0,0,0)');
+                        ctx.fillStyle = grad;
+                        ctx.beginPath(); ctx.arc(0,0,rad,0,Math.PI*2); ctx.fill();
+                        ctx.strokeStyle = 'rgba(236,72,153,0.5)'; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.arc(0,0,rad*0.8,0,Math.PI*2); ctx.stroke();
+                        ctx.globalCompositeOperation = 'source-over';
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                        [{x:0.3,y:0.3,s:0.2},{x:-0.4,y:0.1,s:0.25},{x:0.1,y:-0.4,s:0.15}].forEach(c=>{ ctx.beginPath(); ctx.arc(c.x*rad, c.y*rad, c.s*rad, 0, Math.PI*2); ctx.fill(); });
+                        ctx.restore();
+                    }else{
+                        ctx.fillStyle='#d946ef'; ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2); ctx.fill();
+                    }
+                }else if(b.type==='laser_evo'){ctx.fillStyle='rgba(56,189,248,0.6)';ctx.beginPath();ctx.arc(p.x,p.y,Math.max(0.1,b.aoe),0,Math.PI*2);ctx.fill();
+                }else if(b.type==='blaster'){ctx.strokeStyle=b.isEvo?'#fbbf24':'#facc15';ctx.lineWidth=b.isEvo?4:3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-b.vx*1.5,p.y-b.vy*1.5);ctx.stroke();
+                }else if(b.type==='bomb'||b.type==='mine'){ctx.fillStyle=b.isEvo?'#22c55e':(b.type==='mine'?'#f59e0b':'#f43f5e');ctx.beginPath();ctx.arc(p.x,p.y,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x-2,p.y-2,3,0,Math.PI*2);ctx.fill();
+                }else if(b.type==='blade'){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(b.angle);ctx.fillStyle=b.isEvo?'rgba(250,204,21,0.8)':'rgba(56,189,248,0.8)';ctx.beginPath();ctx.arc(0,0,Math.max(0.1,b.aoe),-Math.PI/3,Math.PI/3);ctx.lineTo(0,0);ctx.fill();ctx.restore();
+                }else{ctx.strokeStyle='#38bdf8';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-b.vx*2,p.y-b.vy*2);ctx.stroke();}
+            });
+            
+            if(gameState!=='dying'){
+                enemies.forEach(e=>{if(e.type==='elite'||e.isBoss)drawRadarPointer(e.x,e.y,'#f87171');}); consumables.forEach(c=>{if(c.type==='chest')drawRadarPointer(c.x,c.y,'#facc15');});
+                ctx.save(); ctx.translate(canvas.width/2,canvas.height/2); ctx.rotate(Math.atan2(player.lastFacingY,player.lastFacingX)); if(player.invincibleTimer>0&&Math.floor(frameCount/5)%2===0)ctx.globalAlpha=0.5; drawPlayerShip(CHARACTERS[selectedCharIndex].id,player.isDashing,player.damageFlash); ctx.globalAlpha=1.0; ctx.restore();
+                ctx.strokeStyle='rgba(56,189,248,0.05)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(canvas.width/2,canvas.height/2,player.pickupRadius,0,Math.PI*2); ctx.stroke();
+                let shp=Math.min(1,Math.max(0,(player.hp>0?player.hp:0)/(player.maxHp>0?player.maxHp:100))); ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(canvas.width/2-25,canvas.height/2+25,50,6); ctx.fillStyle=shp>0.5?'#4ade80':(shp>0.25?'#facc15':'#ef4444'); ctx.fillRect(canvas.width/2-25,canvas.height/2+25,50*shp,6); ctx.strokeStyle='#1e293b'; ctx.lineWidth=1; ctx.strokeRect(canvas.width/2-25,canvas.height/2+25,50,6);
+                if(isTouching&&joystickOrigin&&joystickCurrent&&gameState==='playing'){ctx.fillStyle='rgba(255,255,255,0.1)';ctx.beginPath();ctx.arc(joystickOrigin.x,joystickOrigin.y,40,0,Math.PI*2);ctx.fill();let d=Math.hypot(joystickCurrent.x-joystickOrigin.x,joystickCurrent.y-joystickOrigin.y),rx=joystickOrigin.x+(d>0?((joystickCurrent.x-joystickOrigin.x)/d)*Math.min(d,40):0),ry=joystickOrigin.y+(d>0?((joystickCurrent.y-joystickOrigin.y)/d)*Math.min(d,40):0);ctx.fillStyle='rgba(56,189,248,0.5)';ctx.beginPath();ctx.arc(rx,ry,15,0,Math.PI*2);ctx.fill();}
+            }
+            ctx.font='bold 16px monospace'; ctx.textAlign='center'; floatTexts.forEach(f=>{let p=getScreenPos(f.x,f.y);ctx.globalAlpha=Math.max(0,f.life/40);ctx.fillStyle=f.color||'white';ctx.fillText(f.text,p.x,p.y);}); ctx.globalAlpha=1.0;
+        }
+        ctx.restore();
+        if(gameState==='dying'){
+            ctx.save(); ctx.translate(canvas.width/2,canvas.height/2); ctx.beginPath(); ctx.arc(0,0,Math.max(1,deathShockwaveRadius),0,Math.PI*2); ctx.lineWidth=Math.max(1,40-deathShockwaveRadius/25); ctx.strokeStyle=`rgba(255,255,255,${Math.max(0,1-deathShockwaveRadius/1500)})`; ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,Math.max(1,deathShockwaveRadius*0.8),0,Math.PI*2); ctx.fillStyle=`rgba(239,68,68,${Math.max(0,0.4-deathShockwaveRadius/1200)})`; ctx.fill(); ctx.restore();
+            if(deathFlashAlpha>0.01){ctx.fillStyle=`rgba(255,255,255,${deathFlashAlpha})`;ctx.fillRect(0,0,canvas.width,canvas.height);} let fa=Math.max(0,Math.min(0.8,(15-deathTimer)/15)); ctx.fillStyle=`rgba(159,18,57,${fa})`; ctx.fillRect(0,0,canvas.width,canvas.height);
+            let ta=Math.max(0,Math.min(1,(15-deathTimer)/5)); ctx.font='900 48px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; let gx=deathTimer<12&&Math.random()<0.5?(Math.random()-0.5)*25:0; ctx.fillStyle=`rgba(56,189,248,${ta*0.7})`; ctx.fillText("CRITICAL DAMAGE",canvas.width/2+gx-4,canvas.height/2-50); ctx.fillStyle=`rgba(244,63,94,${ta*0.7})`; ctx.fillText("CRITICAL DAMAGE",canvas.width/2+gx+4,canvas.height/2-50); ctx.fillStyle=`rgba(255,255,255,${ta})`; ctx.shadowBlur=20; ctx.shadowColor='#e11d48'; ctx.fillText("CRITICAL DAMAGE",canvas.width/2+gx,canvas.height/2-50); ctx.shadowBlur=0; ctx.font='bold 20px sans-serif'; ctx.fillStyle=`rgba(148,163,184,${ta})`; ctx.fillText(">> CONNECTION LOST <<",canvas.width/2+gx,canvas.height/2); ctx.restore();
+        }
+    }
+    function gameLoop() { if(gameState==='playing'||gameState==='dying')update(); draw(); requestAnimationFrame(gameLoop); }
+    
+    // 啟動迴圈
+    gameLoop();
+</script>
 </body>
 </html>
