@@ -66,10 +66,10 @@
         .blinking-text { font-size: 18px; color: #fca5a5; animation: blink 1.5s infinite; font-weight: bold; text-shadow: 2px 2px 0 #000; margin-top: 40px; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* === 模態視窗共用 === */
+        /* === 模態視窗共用 (頭部、內容、底部) === */
         .modal-header { height: calc(60px + env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; padding: env(safe-area-inset-top) max(15px, env(safe-area-inset-right)) 0 max(15px, env(safe-area-inset-left)); background: #000; border-bottom: 2px solid #450a0a; flex-shrink: 0; z-index: 2; }
         .modal-header .title { font-size: 20px; font-weight: bold; color: #facc15; margin: 0; }
-        .icon-btn { background: #1e293b; border: 1px solid #475569; color: white; font-size: 16px; padding: 6px 12px; border-radius: 6px; box-shadow: 0 3px 0 #020617; font-weight: bold;}
+        .icon-btn { background: #1e293b; border: 1px solid #475569; color: white; font-size: 16px; padding: 6px 12px; border-radius: 6px; box-shadow: 0 3px 0 #020617; font-weight: bold; cursor: pointer;}
         .icon-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #020617; }
         
         .modal-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px max(15px, env(safe-area-inset-right)) 15px max(15px, env(safe-area-inset-left)); z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 15px;}
@@ -106,7 +106,7 @@
         .card-content { flex: 1; min-width: 0; } 
         .card-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;}
         .card-title-row h3 { margin: 0; font-size: 16px; color: #fff; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
-        .card-tag { font-size: 11px; color: #9ca3af; padding: 1px 0; flex-shrink: 0;}
+        .card-tag { font-size: 11px; color: #fff; padding: 1px 0; flex-shrink: 0;}
         .card-desc { margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.4; word-break: break-word;}
         
         /* 商店購買按鈕專屬防擠壓 */
@@ -143,7 +143,7 @@
             .modal-header .title { font-size: 28px; }
             .time-display { font-size: 42px; }
             .stats-text { font-size: 20px; }
-            .weapon-slot { width: 32px; height: 32px; font-size: 18px; }
+            .weapon-slot { width: 34px; height: 34px; font-size: 18px; }
             .weapon-slot .lvl-badge { font-size: 10px; }
             .inv-row { width: 230px; }
             .char-slot { width: 80px; height: 80px; font-size: 40px;}
@@ -241,7 +241,7 @@
         </div>
         <div class="modal-content" id="stage-list"></div>
         <div class="modal-footer">
-            <button class="btn-main btn-green-main" style="width:100%; max-width:400px; padding:15px; font-size:22px;" onclick="startGame()">開始出擊</button>
+            <button class="btn-main btn-green-main" style="width:100%; max-width:400px; padding:15px; font-size:22px;" onclick="startGame()">部署並空降</button>
         </div>
     </div>
 
@@ -265,7 +265,7 @@
         <div class="modal-content no-footer" id="shop-items-container"></div>
     </div>
 
-    <!-- 🌟 升級彈窗 (無殘留) -->
+    <!-- 🌟 升級彈窗 (防重疊設計) -->
     <div id="level-up-modal" class="popup-overlay hidden">
         <div class="popup-box">
             <h1 class="popup-title">等級提升</h1>
@@ -327,7 +327,7 @@
     function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize); resize();
 
-    // 🎵 音效引擎 (Web Audio API)
+    // 🎵 終極防當機音效引擎 (Web Audio API)
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
     function initAudio() { if(!audioCtx) { audioCtx = new AudioContext(); } if(audioCtx.state === 'suspended') { audioCtx.resume(); } }
@@ -342,11 +342,14 @@
             osc.start(); osc.stop(audioCtx.currentTime + duration);
         } catch(e){}
     }
-    function soundShoot() { playTone(800, 'square', 0.05, 0.02); }
-    function soundHit() { playTone(100, 'sawtooth', 0.05, 0.02); } 
-    function soundGem() { playTone(1200, 'sine', 0.08, 0.05); }
+    
+    // 🛡️ 音效節流保護 (防止擊中大量敵人時AudioContext崩潰當機)
+    let lastSoundFrame = { hit: 0, shoot: 0, gem: 0 };
+    function soundShoot() { if(frameCount - lastSoundFrame.shoot < 4) return; lastSoundFrame.shoot = frameCount; playTone(800, 'square', 0.05, 0.02); }
+    function soundHit() { if(frameCount - lastSoundFrame.hit < 4) return; lastSoundFrame.hit = frameCount; playTone(150, 'sawtooth', 0.08, 0.04); } 
+    function soundGem() { if(frameCount - lastSoundFrame.gem < 2) return; lastSoundFrame.gem = frameCount; playTone(1200, 'sine', 0.08, 0.05); }
     function soundClick() { playTone(600, 'sine', 0.1, 0.1); }
-    function soundDash() { // 空間摺疊專屬音效
+    function soundDash() { 
         if(!audioCtx) return;
         try {
             let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
@@ -379,7 +382,7 @@
         plasma: { name:'電漿爆破', icon:'🔮', maxLevel:8, evoReq:'area', evoName:'超新星', evoIcon:'🌌', desc:['發射爆炸球','範圍擴大','額外1個','傷害提高','冷卻縮短','額外1個','範圍擴大','牽引黑洞'] },
         aura: { name:'輻射力場', icon:'🌀', maxLevel:8, evoReq:'magnet', evoName:'絕對領域', evoIcon:'💠', desc:['近身傷害','範圍擴大','頻率加快','傷害提高','範圍擴大','頻率加快','傷害提高','絞肉機'] },
         bomb: { name:'櫻桃炸彈', icon:'🍒', maxLevel:8, evoReq:'hp', evoName:'核聚變彈', evoIcon:'☢️', desc:['投擲炸彈','範圍擴大','冷卻縮短','額外1個','傷害提高','範圍擴大','額外1個','核爆'] },
-        blade: { name:'光束斬艦刀', icon:'🗡️', maxLevel:8, evoReq:'regen', evoName:'等離子光劍', evoIcon:'⚔️', desc:['揮出光刃','傷害提高','範圍擴大','冷卻縮短','傷害提高','範圍擴大','冷卻縮短','巨型光劍'] },
+        blade: { name:'光束斬艦刀', icon:'🗡️', maxLevel:8, evoReq:'regen', evoName:'等離子光剑', evoIcon:'⚔️', desc:['揮出光刃','傷害提高','範圍擴大','冷卻縮短','傷害提高','範圍擴大','冷卻縮短','巨型光劍'] },
         mine: { name:'定時機雷', icon:'💣', maxLevel:8, evoReq:'duration', evoName:'反物質地雷', evoIcon:'💥', desc:['原地布雷','傷害提高','額外1個','範圍擴大','傷害提高','冷卻縮短','範圍擴大','連鎖毀滅'] }
     };
     const PASSIVE_DB = { cooldown: {name:'冷卻核心',icon:'❄️',maxLevel:5,desc:'冷卻縮短8%'}, damage: {name:'高能晶片',icon:'🔥',maxLevel:5,desc:'傷害提高10%'}, proj_speed: {name:'超導軌道',icon:'🛤️',maxLevel:5,desc:'速度加快10%'}, area: {name:'廣域雷達',icon:'📡',maxLevel:5,desc:'範圍擴大10%'}, magnet: {name:'牽引網',icon:'🧲',maxLevel:5,desc:'拾取範圍25%'}, hp: {name:'裝甲塗層',icon:'🛡️',maxLevel:5,desc:'最大生命20%'}, regen: {name:'奈米修復',icon:'🩹',maxLevel:5,desc:'5秒恢復1生命'}, duration: {name:'持久電池',icon:'🔋',maxLevel:5,desc:'持續延長15%'} };
@@ -413,7 +416,7 @@
     function checkAchievement(id) { if(!saveData.achievements)saveData.achievements=[]; if(!saveData.achievements.includes(id)){ saveData.achievements.push(id); if(id==='kill_elite')saveData.coins+=500; saveGame(); let a=ACHIEVEMENTS.find(x=>x.id===id); if(a){soundLevelUp(); safeUpdate('ach-popup-title',a.title); let p = document.getElementById('achievement-popup'); p.style.display='flex'; setTimeout(()=>{p.style.display='none';},3500);} } }
     function calcStats() { let c=CHARACTERS[selectedCharIndex]; globalDmgMult=c.damage+(saveData.upgrades.damage||0)*0.05; globalCdMult=1; globalProjSpeedMult=1; globalAreaMult=1; globalDurationMult=1; if(player.passives.damage)globalDmgMult+=player.passives.damage.level*0.1; if(player.passives.cooldown)globalCdMult-=player.passives.cooldown.level*0.08; if(player.passives.proj_speed)globalProjSpeedMult+=player.passives.proj_speed.level*0.1; if(player.passives.area)globalAreaMult+=player.passives.area.level*0.1; if(player.passives.duration)globalDurationMult+=player.passives.duration.level*0.15; player.pickupRadius=100*(1+(saveData.upgrades.magnet||0)*0.1); if(player.passives.magnet)player.pickupRadius*=(1+player.passives.magnet.level*0.25); globalCdMult=Math.max(0.1,globalCdMult); if(c.id==='ranger')globalDmgMult+=Math.floor(player.level/10)*0.1; if(c.id==='engineer')globalDurationMult+=0.2; if(c.id==='scavenger')player.pickupRadius+=50; }
     
-    function updateInventoryUI() { let f=(rId,src, isP)=>{ let r=document.getElementById(rId); if(!r)return; r.innerHTML=''; for(let i=0;i<6;i++){ let ks=Object.keys(src), d=document.createElement('div'); if(i<ks.length){ let id=ks[i], w=src[id], db=isP?PASSIVE_DB[id]:WEAPON_DB[id]; d.className=`weapon-slot ${w.isEvolved?'evolved':''} ${isP?'passive':''}`; d.innerHTML=`${db.icon}<div class="lvl-badge">${w.isEvolved?'M':w.level}</div>`; }else{ d.className=`weapon-slot empty ${isP?'passive':''}`; } r.appendChild(d); } }; f('weapon-row',player.weapons, false); f('passive-row',player.passives, true); f('pause-weapon-row',player.weapons, false); f('pause-passive-row',player.passives, true); }
+    function updateInventoryUI() { let f=(rId,src, isP)=>{ let r=document.getElementById(rId); if(!r)return; r.innerHTML=''; for(let i=0;i<6;i++){ let ks=Object.keys(src), d=document.createElement('div'); if(i<ks.length){ let id=ks[i], w=src[id], db=isP?PASSIVE_DB[id]:WEAPON_DB[id]; d.className=`weapon-slot ${w.isEvolved?'evolved':''} ${isP?'passive':''}`; d.innerHTML=`${w.isEvolved?db.evoIcon:db.icon}<div class="lvl-badge">${w.isEvolved?'M':w.level}</div>`; }else{ d.className=`weapon-slot empty ${isP?'passive':''}`; } r.appendChild(d); } }; f('weapon-row',player.weapons, false); f('passive-row',player.passives, true); f('pause-weapon-row',player.weapons, false); f('pause-passive-row',player.passives, true); }
     function acquireWeapon(id) { if(id==='blaster')player.weapons.blaster={level:1,baseDamage:15,baseCooldown:40,baseSpeed:14,count:1,timer:0,isEvolved:false}; if(id==='laser')player.weapons.laser={level:1,baseDamage:10,baseCooldown:50,baseSpeed:15,timer:0,isEvolved:false}; if(id==='drone')player.weapons.drone={level:1,baseDamage:10,count:2,baseRadius:50,baseSpeed:0.05,isEvolved:false}; if(id==='plasma')player.weapons.plasma={level:1,baseDamage:20,baseCooldown:80,baseSpeed:5,count:2,baseAoe:30,timer:0,isEvolved:false}; if(id==='aura')player.weapons.aura={level:1,baseDamage:6,baseRadius:35,baseTickRate:20,timer:0,isEvolved:false}; if(id==='bomb')player.weapons.bomb={level:1,baseDamage:25,baseCooldown:100,baseSpeed:6,count:1,baseAoe:50,timer:0,isEvolved:false}; if(id==='blade')player.weapons.blade={level:1,baseDamage:18,baseCooldown:60,baseSpeed:8,count:1,baseAoe:40,timer:0,isEvolved:false}; if(id==='mine')player.weapons.mine={level:1,baseDamage:35,baseCooldown:90,count:1,baseAoe:50,timer:0,isEvolved:false}; updateInventoryUI(); calcStats(); }
     function upgradeWeapon(id) { let w=player.weapons[id]; w.level++; if(id==='blaster'){if(w.level===2)w.count=2;if(w.level===3)w.baseDamage+=4;if(w.level===4)w.count=3;if(w.level===5)w.baseDamage+=5;if(w.level===6)w.baseSpeed+=3;if(w.level===7)w.baseDamage+=6;if(w.level===8)w.baseCooldown-=10;} if(id==='laser'){if(w.level===2)w.baseDamage+=3;if(w.level===3)w.baseCooldown-=5;if(w.level===4)w.baseDamage+=4;if(w.level===5)w.baseSpeed+=2;if(w.level===6)w.baseCooldown-=5;if(w.level===7)w.baseDamage+=5;if(w.level===8)w.baseCooldown-=10;} if(id==='drone'){if(w.level===2)w.baseDamage+=2;if(w.level===3)w.count=3;if(w.level===4)w.baseSpeed+=0.02;if(w.level===5)w.baseRadius+=10;if(w.level===6)w.count=4;if(w.level===7)w.baseDamage+=3;if(w.level===8)w.count=5;} if(id==='plasma'){if(w.level===2)w.baseAoe+=10;if(w.level===3)w.count=3;if(w.level===4)w.baseDamage+=5;if(w.level===5)w.baseCooldown-=10;if(w.level===6)w.count=4;if(w.level===7)w.baseAoe+=10;if(w.level===8)w.baseCooldown-=15;} if(id==='aura'){if(w.level===2)w.baseRadius+=10;if(w.level===3)w.baseTickRate-=5;if(w.level===4)w.baseDamage+=2;if(w.level===5)w.baseRadius+=10;if(w.level===6)w.baseTickRate-=5;if(w.level===7)w.baseDamage+=2;if(w.level===8)w.baseRadius+=15;} if(id==='bomb'){if(w.level===2)w.baseAoe+=10;if(w.level===3)w.baseCooldown-=10;if(w.level===4)w.count=2;if(w.level===5)w.baseDamage+=10;if(w.level===6)w.baseAoe+=15;if(w.level===7)w.count=3;if(w.level===8)w.baseCooldown-=15;} if(id==='blade'){if(w.level===2)w.baseDamage+=5;if(w.level===3)w.baseAoe+=10;if(w.level===4)w.baseCooldown-=5;if(w.level===5)w.baseDamage+=5;if(w.level===6)w.baseAoe+=15;if(w.level===7)w.baseCooldown-=5;if(w.level===8)w.baseDamage+=10;} if(id==='mine'){if(w.level===2)w.baseDamage+=10;if(w.level===3)w.count=2;if(w.level===4)w.baseAoe+=10;if(w.level===5)w.baseDamage+=10;if(w.level===6)w.baseCooldown-=10;if(w.level===7)w.baseAoe+=15;if(w.level===8)w.count=3;} updateInventoryUI(); }
     function evolveWeapon(id) { let w=player.weapons[id]; w.isEvolved=true; if(id==='blaster'){w.count=5;w.baseCooldown=15;w.baseDamage*=1.2;w.baseSpeed=20;} if(id==='laser'){w.baseCooldown=20;w.baseDamage*=1.5;w.baseAoe=50;} if(id==='drone'){w.count=8;w.baseSpeed=0.15;w.baseRadius=80;w.baseDamage*=1.5;} if(id==='plasma'){w.count=1;w.baseCooldown=120;w.baseSpeed=2;w.baseAoe=120;w.baseDamage*=3;} if(id==='aura'){w.baseTickRate=12;w.baseRadius=70;w.baseDamage*=1.5;} if(id==='bomb'){w.count=1;w.baseCooldown=200;w.baseAoe=180;w.baseDamage*=5;} if(id==='blade'){w.baseCooldown=30;w.baseAoe=90;w.baseDamage*=2;w.baseSpeed=12;} if(id==='mine'){w.count=2;w.baseCooldown=60;w.baseAoe=120;w.baseDamage*=3;} updateInventoryUI(); checkAchievement('evolve_weapon'); }
@@ -426,7 +429,7 @@
     function handleTE(e){e.preventDefault();if(joystickTouchId===null)return;let L=false;for(let i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===joystickTouchId){L=true;break;}}if(L){isTouching=false;joystickOrigin=null;joystickCurrent=null;touchVector={x:0,y:0};joystickTouchId=null;}}
     canvas.addEventListener('touchend',handleTE,{passive:false}); canvas.addEventListener('touchcancel',handleTE,{passive:false});
 
-    // 🔄 升級排隊系統 (防畫面殘留與吃次數)
+    // 🔄 完美的升級排隊系統 (防畫面殘留與吃次數)
     let pendingLevelUps = 0;
     function processNextLevelUp() {
         if (pendingLevelUps > 0) {
@@ -439,10 +442,10 @@
     }
 
     function startGame() { soundClick(); hideAllModals(); let c=CHARACTERS[selectedCharIndex]; player={size:16,speed:c.speed+(saveData.upgrades.speed||0)*0.5,hp:c.hp+(saveData.upgrades.hp||0)*10,maxHp:c.hp+(saveData.upgrades.hp||0)*10,exp:0,maxExp:5,level:1,angle:-Math.PI/2,lastFacingX:1,lastFacingY:0,damageFlash:0,weapons:{},passives:{},dashCd:0,isDashing:false,dashTimer:0,invincibleTimer:0}; calcStats(); acquireWeapon(c.weapon); worldX=0;worldY=0;score=0;frameCount=0;gameSeconds=0;collectedCoins=0;screenShake=0;deathTimer=0; pendingLevelUps=0; enemies=[];bullets=[];gems=[];coinsArr=[];floatTexts=[];particles=[];destructibles=[];consumables=[]; destructiblesDestroyed=0;bossSpawned=false;currentBoss=null;joystickTouchId=null;isTouching=false;touchVector={x:0,y:0}; document.getElementById('game-ui').classList.remove('hidden'); document.getElementById('exp-fill').style.width='0%'; safeUpdate('level-display','1'); safeUpdate('score-display','0'); safeUpdate('time-display','00:00'); document.getElementById('dash-btn').classList.remove('cooldown'); updateMenuCoins(); updateInventoryUI(); setHudVisible(true); gameState='playing'; }
-    function gameOver(v=false) { playTone(100, 'sawtooth', 1.0, 0.2); gameState='gameover'; setHudVisible(false); let t=document.getElementById('game-over-title'); if(v){t.innerText='任務完成';t.style.color='#facc15';}else{t.innerText='訊號中斷';t.style.color='#f87171';} safeUpdate('final-level',player.level); safeUpdate('final-score',score); safeUpdate('final-time',`${String(Math.floor(gameSeconds/60)).padStart(2,'0')}:${String(gameSeconds%60).padStart(2,'0')}`); safeUpdate('final-coins',collectedCoins); saveData.coins+=collectedCoins; saveGame(); document.getElementById('game-over-modal').classList.remove('hidden'); }
+    function gameOver(v=false) { playTone(100, 'sawtooth', 1.0, 0.2); gameState='gameover'; setHudVisible(false); document.getElementById('game-ui').classList.add('hidden'); let t=document.getElementById('game-over-title'); if(v){t.innerText='任務完成';t.style.color='#facc15';}else{t.innerText='訊號中斷';t.style.color='#f87171';} safeUpdate('final-level',player.level); safeUpdate('final-score',score); safeUpdate('final-time',`${String(Math.floor(gameSeconds/60)).padStart(2,'0')}:${String(gameSeconds%60).padStart(2,'0')}`); safeUpdate('final-coins',collectedCoins); saveData.coins+=collectedCoins; saveGame(); document.getElementById('game-over-modal').classList.remove('hidden'); }
     function togglePause() { soundClick(); if(gameState==='playing'){gameState='paused'; setHudVisible(false); document.getElementById('pause-modal').classList.remove('hidden');} }
     function resumeFromPause() { soundClick(); gameState='playing'; document.getElementById('pause-modal').classList.add('hidden'); setHudVisible(true); }
-    function quitToMenu() { soundClick(); saveData.coins+=collectedCoins; saveGame(); setHudVisible(false); enterTitle(); }
+    function quitToMenu() { soundClick(); saveData.coins+=collectedCoins; saveGame(); document.getElementById('game-ui').classList.add('hidden'); enterTitle(); }
     let dashRequested=false; function triggerDash() { if(player.dashCd<=0&&gameState==='playing')dashRequested=true; }
 
     const stars=[], nebulas=[]; for(let i=0;i<200;i++)stars.push({x:Math.random()*3000,y:Math.random()*3000,size:Math.random()*1.5+0.5,depth:Math.random()*0.4+0.1}); for(let i=0;i<8;i++)nebulas.push({x:Math.random()*4000,y:Math.random()*4000,radius:400+Math.random()*600,hue:Math.random()*360,depth:0.02});
@@ -450,7 +453,7 @@
 
     function getScreenPos(wx,wy) { return {x:wx-worldX+canvas.width/2,y:wy-worldY+canvas.height/2}; }
     function spawnEnemyBatch() {
-        if(enemies.length>800||bossSpawned)return;
+        if(enemies.length>450||bossSpawned)return; // 💥 防手機當機限制數量
         let wm=Math.floor(gameSeconds/30), hpSc=1+wm*0.8+Math.pow(wm,2)*0.4, count=15+Math.floor(gameSeconds/5)*5; 
         let isS=(gameSeconds%60>=45); if(isS)count*=3; let radB=Math.max(canvas.width,canvas.height)/2+50;
         for(let i=0;i<count;i++){
@@ -465,12 +468,12 @@
         }
     }
     function spawnLeviathan() { enemies=[]; let sr=Math.max(canvas.width,canvas.height)/2+100, v=[]; for(let i=0;i<12;i++)v.push({a:(i/12)*Math.PI*2,r:i%2===0?1:0.6}); currentBoss={type:'leviathan',isBoss:true,name:'【星噬者】',x:worldX,y:worldY-sr,size:100,speed:player.speed*0.6,hp:150000,maxHp:150000,angle:0,rotSpeed:0.05,vertices:v,actionTimer:0,knockbackX:0,knockbackY:0,damageFlash:0,color:'#000',kbResist:0,droneCd:0}; enemies.push(currentBoss); }
-    function spawnParticles(x,y,c,ct) { if(particles.length>200)ct=Math.floor(ct/4); for(let i=0;i<ct;i++){let a=Math.random()*Math.PI*2,s=Math.random()*3+1;particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:15+Math.random()*15,maxLife:30,color:c,size:Math.random()*3+1});} }
+    function spawnParticles(x,y,c,ct) { if(particles.length>300) return; for(let i=0;i<ct;i++){let a=Math.random()*Math.PI*2,s=Math.random()*3+1;particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:15+Math.random()*15,maxLife:30,color:c,size:Math.random()*3+1});} }
     function spawnDestructible() { let a=Math.random()*Math.PI*2, sr=Math.max(canvas.width,canvas.height)/2+50+Math.random()*200; destructibles.push({x:worldX+Math.cos(a)*sr,y:worldY+Math.sin(a)*sr,size:20,hp:1}); }
 
     let chestRewardItem=null;
     function triggerChestAnimation() {
-        soundLevelUp(); gameState='chest'; setHudVisible(false); document.getElementById('chest-modal').classList.remove('hidden'); let b=document.getElementById('chest-box'); b.className='chest-img'; b.innerText='📦'; b.style.pointerEvents='auto'; let crui=document.getElementById('chest-reward-ui'); crui.style.display='none'; crui.classList.add('hidden'); chestRewardItem=null; let gold=100+Math.floor(Math.random()*100), readyEvo=null; for(let id in player.weapons){let w=player.weapons[id];if(w.level>=WEAPON_DB[id].maxLevel&&!w.isEvolved&&player.passives[WEAPON_DB[id].evoReq]){readyEvo=id;break;}} if(readyEvo){let db=WEAPON_DB[readyEvo];chestRewardItem={type:'evo',id:readyEvo,html:`<div class="card-icon-box" style="font-size:30px; border:none; background:transparent;">${db.evoIcon}</div><div class="card-content"><div class="card-title-row"><h3>${db.evoName}</h3><span class="card-tag evo-tag">進化</span></div><p class="card-desc" style="color:#facc15;">突破極限！</p></div>`};gold+=200;}else{let u=[];for(let w in player.weapons)if(player.weapons[w].level<WEAPON_DB[w].maxLevel)u.push({id:w,type:'weapon'});for(let p in player.passives)if(player.passives[p].level<PASSIVE_DB[p].maxLevel)u.push({id:p,type:'passive'});if(u.length>0){let p=u[Math.floor(Math.random()*u.length)],db=p.type==='weapon'?WEAPON_DB[p.id]:PASSIVE_DB[p.id],nl=(p.type==='weapon'?player.weapons[p.id].level:player.passives[p.id].level)+1;chestRewardItem={type:p.type,id:p.id,html:`<div class="card-icon-box" style="font-size:30px; border:none; background:transparent;">${db.icon}</div><div class="card-content"><div class="card-title-row"><h3>${db.name}</h3><span class="card-tag">Lv.${nl}</span></div><p class="card-desc">${db.desc[nl-1]||db.desc}</p></div>`};}else{chestRewardItem={type:'gold',html:`<div class="card-icon-box" style="font-size:30px; border:none; background:transparent;">💰</div><div class="card-content"><div class="card-title-row"><h3 style="color:#facc15;">巨型金幣</h3><span class="card-tag new">財富</span></div><p class="card-desc">獲得大量物資</p></div>`};gold+=500;}} safeUpdate('chest-coins',gold); document.getElementById('chest-item-box').innerHTML=chestRewardItem.html; document.getElementById('chest-item-box').className='list-card'; b.onclick=()=>{soundClick(); b.className='chest-img opening';setTimeout(()=>{b.innerText='✨';soundLevelUp(); spawnParticles(canvas.width/2,canvas.height/2,'#facc15',300);crui.style.display='flex'; crui.classList.remove('hidden'); collectedCoins+=gold;safeUpdate('ingame-coin-display',collectedCoins);if(chestRewardItem.type==='evo')evolveWeapon(chestRewardItem.id);else if(chestRewardItem.type==='weapon')upgradeWeapon(chestRewardItem.id);else if(chestRewardItem.type==='passive')upgradePassive(chestRewardItem.id);},1500);}; 
+        soundLevelUp(); gameState='chest'; setHudVisible(false); document.getElementById('chest-modal').classList.remove('hidden'); let b=document.getElementById('chest-box'); b.className='chest-img'; b.innerText='📦'; b.style.pointerEvents='auto'; let crui=document.getElementById('chest-reward-ui'); crui.style.display='none'; crui.classList.add('hidden'); chestRewardItem=null; let gold=100+Math.floor(Math.random()*100), readyEvo=null; for(let id in player.weapons){let w=player.weapons[id];if(w.level>=WEAPON_DB[id].maxLevel&&!w.isEvolved&&player.passives[WEAPON_DB[id].evoReq]){readyEvo=id;break;}} if(readyEvo){let db=WEAPON_DB[readyEvo];chestRewardItem={type:'evo',id:readyEvo,html:`<div class="card-icon-box" style="border:none; background:transparent; font-size:36px;">${db.evoIcon}</div><div class="card-content"><div class="card-title-row"><h3>${db.evoName}</h3><span class="card-tag evo-tag">進化</span></div><p class="card-desc" style="color:#facc15;">突破極限！</p></div>`};gold+=200;}else{let u=[];for(let w in player.weapons)if(player.weapons[w].level<WEAPON_DB[w].maxLevel)u.push({id:w,type:'weapon'});for(let p in player.passives)if(player.passives[p].level<PASSIVE_DB[p].maxLevel)u.push({id:p,type:'passive'});if(u.length>0){let p=u[Math.floor(Math.random()*u.length)],db=p.type==='weapon'?WEAPON_DB[p.id]:PASSIVE_DB[p.id],nl=(p.type==='weapon'?player.weapons[p.id].level:player.passives[p.id].level)+1;chestRewardItem={type:p.type,id:p.id,html:`<div class="card-icon-box" style="border:none; background:transparent; font-size:36px;">${db.icon}</div><div class="card-content"><div class="card-title-row"><h3>${db.name}</h3><span class="card-tag">Lv.${nl}</span></div><p class="card-desc">${db.desc[nl-1]||db.desc}</p></div>`};}else{chestRewardItem={type:'gold',html:`<div class="card-icon-box" style="border:none; background:transparent; font-size:36px;">💰</div><div class="card-content"><div class="card-title-row"><h3 style="color:#facc15;">巨型金幣</h3><span class="card-tag new">財富</span></div><p class="card-desc">獲得大量物資</p></div>`};gold+=500;}} safeUpdate('chest-coins',gold); document.getElementById('chest-item-box').innerHTML=chestRewardItem.html; document.getElementById('chest-item-box').className='list-card'; b.onclick=()=>{soundClick(); b.className='chest-img opening';setTimeout(()=>{b.innerText='✨';soundLevelUp(); spawnParticles(canvas.width/2,canvas.height/2,'#facc15',300);crui.style.display='flex'; crui.classList.remove('hidden'); collectedCoins+=gold;safeUpdate('ingame-coin-display',collectedCoins);if(chestRewardItem.type==='evo')evolveWeapon(chestRewardItem.id);else if(chestRewardItem.type==='weapon')upgradeWeapon(chestRewardItem.id);else if(chestRewardItem.type==='passive')upgradePassive(chestRewardItem.id);},1500);}; 
     }
     function closeChest() { soundClick(); document.getElementById('chest-modal').classList.add('hidden'); if(pendingLevelUps>0) processNextLevelUp(); else { setHudVisible(true); gameState='playing'; } }
     
@@ -493,7 +496,7 @@
         document.getElementById('exp-fill').style.width=Math.min(100,(player.exp/player.maxExp*100))+'%'; 
     }
     
-    // 🟢 唯一保留的跳字：補血 (不會出現傷害刮痧數字)
+    // 🟢 唯一保留的跳字：補血
     function addFloatingText(en,text,col) { floatTexts.push({x:en.x+(Math.random()-0.5)*10,y:en.y-20,text:text,life:40,color:col}); }
 
     function update() {
@@ -545,7 +548,7 @@
             // 💥 Boids 實體排斥
             for(let k=1;k<=3;k++){if(i-k>=0){let o=enemies[i-k], d=Math.hypot(e.x-o.x,e.y-o.y), md=(e.size+o.size)*0.8; if(d>0&&d<md){let ov=(md-d)*0.5, nx=(e.x-o.x)/d, ny=(e.y-o.y)/d; e.x+=nx*ov; e.y+=ny*ov; o.x-=nx*ov; o.y-=ny*ov;}}}
             // 🔄 超空間動態重置
-            if(Math.hypot(worldX-e.x,worldY-e.y)>respD && !e.isBoss){ let a=Math.random()*Math.PI*2; if(dx!==0||dy!==0)a=Math.atan2(dy,dx)+(Math.random()-0.5)*Math.PI; let r=Math.max(cw,ch)/2+100; e.x=worldX+Math.cos(a)*r; e.y=worldY+Math.sin(a)*r; }
+            if(Math.hypot(worldX-e.x,worldY-e.y)>respD && !e.isBoss){ let a=player.angle+(Math.random()-0.5)*Math.PI/2; let r=Math.max(cw,ch)/2+100; e.x=worldX+Math.cos(a)*r; e.y=worldY+Math.sin(a)*r; }
 
             if(e.type==='leviathan'){let ex=worldX-e.x,ey=worldY-e.y,d=Math.hypot(ex,ey);if(d>200){e.x+=(ex/d)*e.speed;e.y+=(ey/d)*e.speed;}e.angle+=e.rotSpeed;e.actionTimer++;if(e.actionTimer>=180){e.actionTimer=0;screenShake=20;for(let b=0;b<12;b++){let ba=(b/12)*Math.PI*2+e.angle;enemies.push({type:'boss_bullet',isBoss:false,x:e.x,y:e.y,size:8,speed:4,hp:1,maxHp:1,angle:ba,rotSpeed:0,vertices:[{a:0,r:1},{a:2,r:1},{a:4,r:1}],knockbackX:Math.cos(ba)*4,knockbackY:Math.sin(ba)*4,damageFlash:0,color:'#ef4444',kbResist:1});}}}else if(e.type==='boss_bullet'){e.x+=e.knockbackX;e.y+=e.knockbackY;}else{if(e.type==='charger'){e.actionTimer++;if(e.actionTimer<60){e.x+=Math.cos(e.angle)*e.speed;e.y+=Math.sin(e.angle)*e.speed;}else if(e.actionTimer===60)e.angle=Math.atan2(worldY-e.y,worldX-e.x);else if(e.actionTimer>80)e.actionTimer=0;}else{let ex=worldX-e.x,ey=worldY-e.y,d=Math.hypot(ex,ey);if(d>0){e.x+=(ex/d)*e.speed+e.knockbackX;e.y+=(ey/d)*e.speed+e.knockbackY;}e.angle+=e.rotSpeed;}}
             e.knockbackX*=0.85;e.knockbackY*=0.85;if(e.damageFlash>0)e.damageFlash--;
@@ -679,8 +682,6 @@
         }
     }
     function gameLoop() { if(gameState==='playing'||gameState==='dying')update(); draw(); requestAnimationFrame(gameLoop); }
-    
-    // 啟動迴圈
     gameLoop();
 </script>
 </body>
