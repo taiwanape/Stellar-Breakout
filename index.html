@@ -91,8 +91,10 @@
         .char-info-text { flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; gap: 6px;}
         .char-info-text h2 { margin: 0; color: #fff; font-size: 22px; }
         
+        /* 技能與武器並排展示 */
         .char-badges { display: flex; gap: 8px; flex-wrap: wrap; }
         .char-weapon-info { display: inline-flex; align-items: center; background: #1e293b; padding: 3px 8px; border-radius: 4px; font-size: 11px; color: #cbd5e1; gap: 4px;}
+        
         .char-info-text p { margin: 2px 0 0 0; font-size: 12px; color: #94a3b8; line-height: 1.4; }
         
         .char-stats-grid { display: flex; flex-wrap: wrap; padding: 10px; font-family: monospace; font-size: 12px; background: #0a0a0a; border-radius: 0 0 8px 8px;}
@@ -100,6 +102,7 @@
         .stat-label { color: #cbd5e1; } 
         .stat-value { color: #facc15; text-align: right;}
         
+        /* 🎯 選角網格：靠左對齊 */
         .char-grid-bottom { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 10px; width: 100%; max-width: 500px; margin-top: 5px;}
         .char-slot { background: #0f172a; border: 2px solid #334155; border-radius: 8px; width: 56px; height: 56px; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; }
         .char-slot.selected { border-color: #facc15; background: #450a0a; }
@@ -622,6 +625,7 @@
         enemySpawnQueue -= spawnThisFrame;
     }
 
+    // 🦆 開發者模式：強制召喚 Boss
     window.devSpawnBoss = function() {
         if(bossSpawned || gameState !== 'playing') return;
         gameSeconds = 300; 
@@ -636,7 +640,7 @@
         let sr=Math.max(canvas.width,canvas.height)/2+100;
         currentBoss={
             type:'leviathan', isBoss:true, name:'【虛空魔蛸】',
-            x:worldX, y:worldY-sr, size:120, speed:player.speed*0.6, 
+            x:worldX, y:worldY-sr, size:100, speed:player.speed*0.7, // 提速，確保極致壓迫
             hp:200000, maxHp:200000, angle:Math.PI/2, rotSpeed:0, vertices:[],
             actionTimer:0, targetAngle:0, knockbackX:0, knockbackY:0, damageFlash:0, color:'#000', kbResist:0, droneCd:0, dead: false
         }; 
@@ -645,66 +649,98 @@
         if(timeDisp) timeDisp.classList.add('boss');
         startBGM(); 
     }
-
-    // 🦑 動態純 Canvas 繪製虛空魔蛸
+    
+    // 🦑 動態純 Canvas 繪製虛空魔蛸 (完全程序化)
     function drawVoidOctopus(ctx, size, frameCount, isFlash) {
         let s = size / 100;
         ctx.scale(s, s);
         
-        // 觸手向後 (-X 方向) 擺動
+        // 觸手向後 (-X 方向) 擺動，因為 Boss 是面朝玩家 (+X) 的
         for (let i = 0; i < 8; i++) {
             ctx.save();
-            let angle = (i - 3.5) * 0.4;
+            let angle = (i - 3.5) * 0.35;
             ctx.rotate(angle);
             
             // 動態蠕動公式
-            let wiggle = Math.sin(frameCount * 0.08 + i * 0.5) * 40;
-            let len = 90 + Math.sin(frameCount * 0.05 + i) * 15;
+            let wave1 = Math.sin(frameCount * 0.05 + i * 0.8) * 40;
+            let wave2 = Math.cos(frameCount * 0.03 + i * 0.5) * 50;
+            let len = 100 + Math.sin(frameCount * 0.04 + i) * 30;
             
             ctx.beginPath();
-            ctx.moveTo(-20, -15);
-            ctx.quadraticCurveTo(-60, wiggle, -40 - len, wiggle);
-            ctx.quadraticCurveTo(-60, wiggle + 20, -20, 15);
+            ctx.moveTo(-20, 0);
+            ctx.bezierCurveTo(-60, wave1, -90, wave2, -140 - Math.abs(wave1), wave2 * 1.2);
             
-            ctx.fillStyle = isFlash ? '#fff' : (i%2===0 ? '#4c1d95' : '#5b21b6');
-            ctx.fill();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = isFlash ? '#f87171' : (i%2===0 ? '#7e22ce' : '#8b5cf6');
+            // 觸手本體
+            ctx.lineWidth = 22 - Math.abs(i - 3.5) * 2; 
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = isFlash ? '#fff' : (i % 2 === 0 ? '#6d28d9' : '#4c1d95');
+            ctx.stroke();
+
+            // 發光吸盤 (繪製為虛線)
+            ctx.beginPath();
+            ctx.moveTo(-20, 5); 
+            ctx.bezierCurveTo(-60, wave1 + 5, -90, wave2 + 5, -140 - Math.abs(wave1), wave2 * 1.2 + 5);
+            ctx.lineWidth = 8;
+            ctx.setLineDash([0, 18]); 
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = isFlash ? '#fca5a5' : '#c084fc';
             ctx.stroke();
             
-            // 吸盤
-            ctx.fillStyle = isFlash ? '#fca5a5' : '#3b0764';
-            ctx.beginPath(); ctx.arc(-50, wiggle*0.5, 6, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(-80, wiggle*0.8, 4, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         }
 
-        // 頭部 (+X 方向為前)
+        // 頭部與軀幹 (+X 方向為前)
         ctx.beginPath();
-        ctx.ellipse(15, 0, 80, 65, 0, 0, Math.PI * 2);
-        let grad = ctx.createRadialGradient(15, 0, 0, 15, 0, 80);
-        grad.addColorStop(0, isFlash ? '#fff' : '#a855f7');
-        grad.addColorStop(1, isFlash ? '#fff' : '#4c1d95');
+        ctx.ellipse(-15, 0, 65, 45, 0, 0, Math.PI * 2); // 軀幹後移
+        ctx.arc(25, 0, 40, 0, Math.PI * 2); // 臉部
+        
+        let grad = ctx.createRadialGradient(10, 0, 10, -20, 0, 80);
+        grad.addColorStop(0, isFlash ? '#fff' : '#8b5cf6');
+        grad.addColorStop(1, isFlash ? '#f87171' : '#312e81');
         ctx.fillStyle = grad;
         ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = isFlash ? '#f87171' : '#c084fc';
+        
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = isFlash ? '#fca5a5' : '#c084fc';
         ctx.stroke();
 
-        // 眼睛與斑紋
+        // 生物螢光斑點
         if (!isFlash) {
-            ctx.fillStyle = '#22d3ee'; ctx.shadowBlur = 10; ctx.shadowColor = '#22d3ee';
-            ctx.beginPath(); ctx.moveTo(20, -35); ctx.lineTo(10, -15); ctx.lineTo(5, -35); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(20, 35); ctx.lineTo(10, 15); ctx.lineTo(5, 35); ctx.fill();
+            ctx.fillStyle = 'rgba(45, 212, 191, 0.7)'; // 青色螢光
+            const spots = [
+                {x: -30, y: -20, r: 10}, {x: -45, y: 15, r: 14}, 
+                {x: -10, y: 25, r: 8}, {x: -60, y: -5, r: 12},
+                {x: 5, y: -30, r: 6}, {x: -20, y: 35, r: 7}
+            ];
+            spots.forEach(sp => {
+                ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI*2); ctx.fill();
+            });
+
+            // 邪惡的豎瞳巨眼
+            const drawEye = (ex, ey) => {
+                ctx.save();
+                ctx.translate(ex, ey);
+                ctx.rotate(Math.PI / 8 * (ey > 0 ? 1 : -1)); 
+                
+                // 眼白 (發光黃)
+                ctx.beginPath(); ctx.ellipse(0, 0, 18, 25, 0, 0, Math.PI*2);
+                ctx.fillStyle = '#fef08a';
+                ctx.shadowBlur = 15; ctx.shadowColor = '#eab308';
+                ctx.fill();
+                
+                // 豎瞳
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#000';
+                ctx.beginPath(); ctx.ellipse(4, 0, 4, 12, 0, 0, Math.PI*2); ctx.fill();
+                
+                // 反光
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(6, -8, 3, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            };
             
-            ctx.fillStyle = '#fff'; ctx.shadowBlur = 0;
-            ctx.beginPath(); ctx.arc(12, -22, 3, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(12, 22, 3, 0, Math.PI*2); ctx.fill();
-            
-            ctx.fillStyle = 'rgba(59, 7, 100, 0.5)';
-            ctx.beginPath(); ctx.arc(-25, 0, 18, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(-15, -40, 12, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(-15, 40, 12, 0, Math.PI*2); ctx.fill();
+            drawEye(35, -20); // 左眼
+            drawEye(35, 20);  // 右眼
         }
     }
 
@@ -803,7 +839,7 @@
         
         if(gameState==='dying'){ 
             deathTimer--; deathShockwaveRadius += 80; deathFlashAlpha *= 0.9; 
-            for(let i=particles.length-1;i>=0;i--){ let p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.life--; p.vx*=0.95; p.vy*=0.95; if(p.life<=0) particles.splice(i,1); }
+            for(let i=particles.length-1;i>=0;i--){ let p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.life--; p.vx*=0.95; p.vx*=0.95; if(p.life<=0) particles.splice(i,1); }
             for(let i=floatTexts.length-1;i>=0;i--){ let f=floatTexts[i]; f.y-=0.5; f.life--; if(f.life<=0) floatTexts.splice(i,1); }
             for(let i=enemies.length-1;i>=0;i--){ let e=enemies[i]; e.x+=Math.cos(e.angle)*e.speed*0.02; e.y+=Math.sin(e.angle)*e.speed*0.02; }
             if(deathTimer<=0) gameOver(false); 
@@ -957,14 +993,23 @@
                 if(e.type === 'leviathan'){
                     let ex = worldX - e.x, ey = worldY - e.y, distBoss = Math.hypot(ex, ey);
                     
-                    // 🦑 無盡追擊 (不再保持距離)
-                    e.x += (ex / distBoss) * e.speed; 
-                    e.y += (ey / distBoss) * e.speed; 
-                    e.angle = Math.atan2(ey, ex); // 永遠面向玩家
+                    // 🦑 Boss 橡皮筋防風箏追蹤機制
+                    if(distBoss > Math.max(cw, ch) + 400) {
+                        let jumpAngle = player.angle + (Math.random()-0.5)*Math.PI/2;
+                        e.x = worldX + Math.cos(jumpAngle)*(Math.max(cw, ch)/2 + 200);
+                        e.y = worldY + Math.sin(jumpAngle)*(Math.max(cw, ch)/2 + 200);
+                        spawnParticles(e.x, e.y, '#a855f7', 50);
+                        distBoss = Math.hypot(worldX - e.x, worldY - e.y);
+                    }
 
                     e.actionTimer++;
                     if (e.actionTimer < 400) {
-                        // 🦑 噴射墨斗
+                        // 🦑 無盡追擊 (移除了原本 > 250 才追的限制)
+                        e.x += (ex / distBoss) * e.speed; 
+                        e.y += (ey / distBoss) * e.speed; 
+                        e.angle = Math.atan2(ey, ex); // 面向玩家
+                        
+                        // 🦑 水滴噴墨攻擊
                         if (e.actionTimer % 60 === 0) {
                             soundShoot();
                             for(let ink = -2; ink <= 2; ink++) {
@@ -996,8 +1041,8 @@
                     }
                 } else if(e.type === 'boss_bullet' || e.type === 'boss_ink'){
                     e.x += e.knockbackX; e.y += e.knockbackY;
-                    // 🦑 墨斗滴落特效
-                    if(e.type === 'boss_ink' && frameCount % 3 === 0) spawnParticles(e.x, e.y, '#9333ea', 1);
+                    // 🦑 墨斗滴落粒子特效
+                    if(e.type === 'boss_ink' && frameCount % 3 === 0) spawnParticles(e.x, e.y, '#3b0764', 2);
                 } else {
                     if(e.type === 'charger'){
                         e.actionTimer++;
@@ -1182,65 +1227,97 @@
     function drawRadarPointer(tX,tY,c) { let dx=tX-worldX, dy=tY-worldY, d=Math.hypot(dx,dy); if(d>Math.max(canvas.width,canvas.height)/2){let a=Math.atan2(dy,dx), hw=canvas.width/2-30, hh=canvas.height/2-30, sc=Math.min(hw/Math.abs(Math.cos(a)),hh/Math.abs(Math.sin(a))); ctx.save(); ctx.translate(canvas.width/2+Math.cos(a)*sc,canvas.height/2+Math.sin(a)*sc); ctx.rotate(a); ctx.globalAlpha=0.5+Math.sin(frameCount*0.1)*0.5; ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(15,0); ctx.lineTo(-10,10); ctx.lineTo(-5,0); ctx.lineTo(-10,-10); ctx.closePath(); ctx.fill(); ctx.restore(); } }
     function drawPlayerShip(cId,isD,dF) { ctx.fillStyle=dF>0?'#ef4444':(isD?'#a78bfa':'#e2e8f0'); ctx.strokeStyle=dF>0?'#fca5a5':'#38bdf8'; ctx.lineWidth=2; ctx.beginPath(); if(cId==='heavy'){ctx.moveTo(14,10);ctx.lineTo(-12,14);ctx.lineTo(-12,-14);ctx.lineTo(14,-10);ctx.closePath();ctx.moveTo(0,-6);ctx.lineTo(20,-2);ctx.lineTo(20,2);ctx.lineTo(0,6);}else if(cId==='scout'){ctx.moveTo(22,0);ctx.lineTo(-8,8);ctx.lineTo(-16,20);ctx.lineTo(-4,0);ctx.lineTo(-16,-20);ctx.lineTo(-8,-8);ctx.closePath();}else if(cId==='engineer'){ctx.arc(0,0,12,0,Math.PI*2);ctx.moveTo(16,-4);ctx.lineTo(16,4);ctx.moveTo(-16,-4);ctx.lineTo(-16,4);}else if(cId==='ghost'){ctx.arc(4,0,16,Math.PI*0.2,Math.PI*1.8,true);ctx.quadraticCurveTo(-10,0,4,15);}else if(cId==='scavenger'){ctx.moveTo(16,0);ctx.lineTo(-10,12);ctx.lineTo(-4,0);ctx.lineTo(-14,-10);ctx.lineTo(4,-8);ctx.closePath();}else{ctx.moveTo(18,0);ctx.lineTo(-12,14);ctx.lineTo(-6,0);ctx.lineTo(-12,-14);ctx.closePath();} ctx.fill();ctx.stroke(); if(keys['ArrowUp']||keys['KeyW']||keys['ArrowDown']||keys['KeyS']||keys['ArrowLeft']||keys['KeyA']||keys['ArrowRight']||keys['KeyD']||isTouching||isD){ctx.fillStyle=isD?'#d946ef':'#f97316';ctx.beginPath();if(cId==='heavy'){ctx.moveTo(-12,-8);ctx.lineTo(-20-Math.random()*10,-8);ctx.lineTo(-12,-4);ctx.moveTo(-12,8);ctx.lineTo(-20-Math.random()*10,8);ctx.lineTo(-12,4);}else if(cId==='engineer'){ctx.arc(0,0,14+Math.random()*4,Math.PI*0.7,Math.PI*1.3);}else if(cId==='scavenger'){ctx.moveTo(-4,-3);ctx.lineTo(-18-Math.random()*(isD?15:5),0);ctx.lineTo(-4,3);}else{ctx.moveTo(-7,-4);ctx.lineTo(-18-Math.random()*(isD?15:5),0);ctx.lineTo(-7,4);}ctx.fill();} }
 
-    // 🦑 動態純 Canvas 繪製虛空魔蛸
+    // 🦑 動態純 Canvas 繪製虛空魔蛸 (完全程序化)
     function drawVoidOctopus(ctx, size, frameCount, isFlash) {
         let s = size / 100;
         ctx.scale(s, s);
         
-        // 觸手向後 (-X 方向) 擺動
+        // 觸手向後 (-X 方向) 擺動，因為 Boss 是面朝玩家 (+X) 的
         for (let i = 0; i < 8; i++) {
             ctx.save();
-            let angle = (i - 3.5) * 0.4;
+            let angle = (i - 3.5) * 0.35;
             ctx.rotate(angle);
             
             // 動態蠕動公式
-            let wiggle = Math.sin(frameCount * 0.08 + i * 0.5) * 40;
-            let len = 90 + Math.sin(frameCount * 0.05 + i) * 15;
+            let wave1 = Math.sin(frameCount * 0.05 + i * 0.8) * 40;
+            let wave2 = Math.cos(frameCount * 0.03 + i * 0.5) * 50;
+            let len = 100 + Math.sin(frameCount * 0.04 + i) * 30;
             
             ctx.beginPath();
-            ctx.moveTo(-20, -15);
-            ctx.quadraticCurveTo(-60, wiggle, -40 - len, wiggle);
-            ctx.quadraticCurveTo(-60, wiggle + 20, -20, 15);
+            ctx.moveTo(-20, 0);
+            ctx.bezierCurveTo(-60, wave1, -90, wave2, -140 - Math.abs(wave1), wave2 * 1.2);
             
-            ctx.fillStyle = isFlash ? '#fff' : (i%2===0 ? '#4c1d95' : '#5b21b6');
-            ctx.fill();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = isFlash ? '#f87171' : (i%2===0 ? '#7e22ce' : '#8b5cf6');
+            // 觸手本體
+            ctx.lineWidth = 22 - Math.abs(i - 3.5) * 2; 
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = isFlash ? '#fff' : (i % 2 === 0 ? '#6d28d9' : '#4c1d95');
+            ctx.stroke();
+
+            // 發光吸盤 (繪製為虛線)
+            ctx.beginPath();
+            ctx.moveTo(-20, 5); 
+            ctx.bezierCurveTo(-60, wave1 + 5, -90, wave2 + 5, -140 - Math.abs(wave1), wave2 * 1.2 + 5);
+            ctx.lineWidth = 8;
+            ctx.setLineDash([0, 18]); 
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = isFlash ? '#fca5a5' : '#c084fc';
             ctx.stroke();
             
-            // 吸盤
-            ctx.fillStyle = isFlash ? '#fca5a5' : '#3b0764';
-            ctx.beginPath(); ctx.arc(-50, wiggle*0.5, 6, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(-80, wiggle*0.8, 4, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         }
 
-        // 頭部 (+X 方向為前)
+        // 頭部與軀幹 (+X 方向為前)
         ctx.beginPath();
-        ctx.ellipse(15, 0, 80, 65, 0, 0, Math.PI * 2);
-        let grad = ctx.createRadialGradient(15, 0, 0, 15, 0, 80);
-        grad.addColorStop(0, isFlash ? '#fff' : '#a855f7');
-        grad.addColorStop(1, isFlash ? '#fff' : '#4c1d95');
+        ctx.ellipse(-15, 0, 65, 45, 0, 0, Math.PI * 2); // 軀幹後移
+        ctx.arc(25, 0, 40, 0, Math.PI * 2); // 臉部
+        
+        let grad = ctx.createRadialGradient(10, 0, 10, -20, 0, 80);
+        grad.addColorStop(0, isFlash ? '#fff' : '#8b5cf6');
+        grad.addColorStop(1, isFlash ? '#f87171' : '#312e81');
         ctx.fillStyle = grad;
         ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = isFlash ? '#f87171' : '#c084fc';
+        
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = isFlash ? '#fca5a5' : '#c084fc';
         ctx.stroke();
 
-        // 眼睛與斑紋
+        // 生物螢光斑點
         if (!isFlash) {
-            ctx.fillStyle = '#22d3ee'; ctx.shadowBlur = 10; ctx.shadowColor = '#22d3ee';
-            ctx.beginPath(); ctx.moveTo(20, -35); ctx.lineTo(10, -15); ctx.lineTo(5, -35); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(20, 35); ctx.lineTo(10, 15); ctx.lineTo(5, 35); ctx.fill();
+            ctx.fillStyle = 'rgba(45, 212, 191, 0.7)'; // 青色螢光
+            const spots = [
+                {x: -30, y: -20, r: 10}, {x: -45, y: 15, r: 14}, 
+                {x: -10, y: 25, r: 8}, {x: -60, y: -5, r: 12},
+                {x: 5, y: -30, r: 6}, {x: -20, y: 35, r: 7}
+            ];
+            spots.forEach(sp => {
+                ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI*2); ctx.fill();
+            });
+
+            // 邪惡的豎瞳巨眼
+            const drawEye = (ex, ey) => {
+                ctx.save();
+                ctx.translate(ex, ey);
+                ctx.rotate(Math.PI / 8 * (ey > 0 ? 1 : -1)); 
+                
+                // 眼白 (發光黃)
+                ctx.beginPath(); ctx.ellipse(0, 0, 18, 25, 0, 0, Math.PI*2);
+                ctx.fillStyle = '#fef08a';
+                ctx.shadowBlur = 15; ctx.shadowColor = '#eab308';
+                ctx.fill();
+                
+                // 豎瞳
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#000';
+                ctx.beginPath(); ctx.ellipse(4, 0, 4, 12, 0, 0, Math.PI*2); ctx.fill();
+                
+                // 反光
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(6, -8, 3, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            };
             
-            ctx.fillStyle = '#fff'; ctx.shadowBlur = 0;
-            ctx.beginPath(); ctx.arc(12, -22, 3, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(12, 22, 3, 0, Math.PI*2); ctx.fill();
-            
-            ctx.fillStyle = 'rgba(59, 7, 100, 0.5)';
-            ctx.beginPath(); ctx.arc(-25, 0, 18, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(-15, -40, 12, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(-15, 40, 12, 0, Math.PI*2); ctx.fill();
+            drawEye(35, -20); // 左眼
+            drawEye(35, 20);  // 右眼
         }
     }
 
@@ -1387,11 +1464,11 @@
                         ctx.rotate(inkAngle - en.angle);
                         ctx.beginPath();
                         ctx.moveTo(en.size, 0);
-                        ctx.quadraticCurveTo(0, en.size*0.8, -en.size, en.size*0.8);
-                        ctx.quadraticCurveTo(-en.size*0.5, 0, -en.size, -en.size*0.8);
+                        ctx.quadraticCurveTo(0, en.size*0.8, -en.size*1.5, en.size*0.5); // Tail
+                        ctx.quadraticCurveTo(-en.size, 0, -en.size*1.5, -en.size*0.5);
                         ctx.quadraticCurveTo(0, -en.size*0.8, en.size, 0);
-                        ctx.fillStyle = '#1e1b4b'; ctx.fill();
-                        ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 2; ctx.stroke();
+                        ctx.fillStyle = '#020617'; ctx.fill();
+                        ctx.strokeStyle = '#9333ea'; ctx.lineWidth = 2; ctx.stroke();
                     } else {
                         if(en.damageFlash>0){ctx.fillStyle='#fff';ctx.strokeStyle='#f87171';}else{ctx.fillStyle=en.color;ctx.strokeStyle=(en.type==='elite'?'#f87171':'#64748b');}
                         ctx.lineWidth=en.type==='elite'?3:2;
@@ -1455,9 +1532,9 @@
             
             let ta = Math.max(0, Math.min(1, (30-deathTimer)/5)); 
             
-            // 🅰️ 死亡字體極致放大：分成上下兩排，確保不裁切且具備史詩級衝擊力
-            let mainFontSize = Math.max(40, Math.min(100, canvas.width * 0.15)); 
-            let subFontSize = Math.max(14, Math.min(28, canvas.width * 0.05));
+            // 🅰️ 死亡字體極限放大：分成上下兩排，確保不裁切且具備史詩級衝擊力
+            let mainFontSize = Math.max(50, Math.min(130, canvas.width * 0.2)); 
+            let subFontSize = Math.max(16, Math.min(32, canvas.width * 0.06));
 
             if(glassCracks && glassCracks.length > 0) {
                 ctx.save();
@@ -1516,19 +1593,19 @@
             let ty = canvas.height/2;
             
             // 將長句分為兩行繪製，極限放大不裁切
-            drawTextLayer("CRITICAL", ty - mainFontSize * 0.6, mainFontSize, true, true);
-            drawTextLayer("DAMAGE", ty + mainFontSize * 0.6, mainFontSize, true, true);
+            drawTextLayer("CRITICAL", ty - mainFontSize * 0.7, mainFontSize, true, true);
+            drawTextLayer("DAMAGE", ty + mainFontSize * 0.7, mainFontSize, true, true);
 
             if(isGlitch) {
                 ctx.save();
                 ctx.beginPath();
                 let sliceH = mainFontSize * 0.8;
-                let sliceY = ty - mainFontSize + Math.random() * (mainFontSize * 2);
+                let sliceY = ty - mainFontSize * 1.5 + Math.random() * (mainFontSize * 2.5);
                 ctx.rect(0, sliceY, canvas.width, sliceH);
                 ctx.clip(); 
                 ctx.translate((Math.random()-0.5)*40, 0); 
-                drawTextLayer("CRITICAL", ty - mainFontSize * 0.6, mainFontSize, false, true);
-                drawTextLayer("DAMAGE", ty + mainFontSize * 0.6, mainFontSize, false, true);
+                drawTextLayer("CRITICAL", ty - mainFontSize * 0.7, mainFontSize, false, true);
+                drawTextLayer("DAMAGE", ty + mainFontSize * 0.7, mainFontSize, false, true);
                 
                 ctx.fillStyle=`rgba(255,255,255,${Math.random()})`;
                 ctx.fillRect(0, sliceY + Math.random()*sliceH, canvas.width, 2 + Math.random()*3);
@@ -1537,7 +1614,7 @@
 
             ctx.font = `900 ${subFontSize}px 'Arial Black', Impact, sans-serif`; 
             ctx.fillStyle = `rgba(148,163,184,${ta})`; 
-            ctx.fillText(">> CONNECTION LOST <<", canvas.width/2+gx*0.5, ty + mainFontSize * 1.5 + gy*0.5); 
+            ctx.fillText(">> CONNECTION LOST <<", canvas.width/2+gx*0.5, ty + mainFontSize * 1.6 + gy*0.5); 
         }
     }
     
