@@ -126,14 +126,24 @@
 
         /* === 🌟 彈窗 === */
         .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 50; padding: 20px; }
-        .popup-box { width: 100%; max-width: 450px; display: flex; flex-direction: column; max-height: 85vh; text-align: center; }
+        .popup-box { width: 100%; max-width: 450px; display: flex; flex-direction: column; max-height: 85vh; text-align: center; overflow-x: hidden; }
         .popup-title { color: #facc15; margin: 0 0 15px 0; font-size: 32px; font-weight: 900; text-align: center; letter-spacing: 2px; flex-shrink: 0;}
-        .popup-scroll { flex: 1; overflow-y: auto; padding-bottom: 10px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch;}
+        .popup-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch;}
         .popup-inner { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
 
         .chest-img { font-size: 100px; text-align: center; cursor: pointer; margin: 20px 0; display: inline-block;}
         .opening { animation: shake 0.4s infinite; }
         @keyframes shake { 0%, 100% { transform: translate(1px, -1px) rotate(-2deg); } 50% { transform: translate(-1px, 2px) rotate(2deg); } }
+
+        /* 🌟 升級卡片滑入動畫 */
+        @keyframes slideInFade {
+            0% { opacity: 0; transform: translateX(80px) scale(0.9); }
+            100% { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        .level-up-card-anim {
+            opacity: 0; /* 動畫開始前隱藏 */
+            animation: slideInFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
 
         #achievement-popup { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #2e0909; border: 2px solid #facc15; border-radius: 8px; padding: 10px 15px; display: flex; align-items: center; z-index: 100; display: none; width: max-content; gap: 10px;}
 
@@ -615,8 +625,12 @@
         } 
         
         let ch=p.sort(()=>0.5-Math.random()).slice(0,Math.random()<0.1?4:3); 
-        ch.forEach(x=>{
-            let d=document.createElement('div'); d.className=`list-card clickable ${x.cl==='new'?'chest':''}`; 
+        ch.forEach((x, index)=>{
+            let d=document.createElement('div'); 
+            // 加入 level-up-card-anim 動畫 class
+            d.className=`list-card clickable level-up-card-anim ${x.cl==='new'?'chest':''}`; 
+            // 根據索引設定延遲，製造發牌的階梯感 (0s, 0.1s, 0.2s...)
+            d.style.animationDelay = `${index * 0.1}s`; 
             d.innerHTML=`<div class="card-icon-box">${x.i}</div><div class="card-content"><div class="card-title-row"><h3>${x.n}</h3><span class="card-tag ${x.t==='新武裝'||x.t==='新裝備'?'new':''}">${x.lv?('Lv.'+x.lv):x.t}</span></div><p class="card-desc">${x.d}</p></div>`;
             d.onclick=()=>{soundClick(); x.a(); document.getElementById('level-up-modal').classList.add('hidden'); processNextLevelUp();};
             c.appendChild(d);
@@ -1127,6 +1141,9 @@
             enemies.forEach(en=>{let p=getScreenPos(en.x,en.y);if(p.x>-100&&p.x<canvas.width+100&&p.y>-100&&p.y<canvas.height+100){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(en.angle);if(en.damageFlash>0){ctx.fillStyle='#fff';ctx.strokeStyle='#f87171';}else{ctx.fillStyle=en.color;ctx.strokeStyle=(en.type==='elite'?'#f87171':(en.type==='leviathan'?'#fbbf24':'#64748b'));}ctx.lineWidth=(en.type==='elite'||en.type==='leviathan')?3:2;ctx.beginPath();en.vertices.forEach((v,idx)=>{let px=Math.cos(v.a)*en.size*v.r,py=Math.sin(v.a)*en.size*v.r;if(idx===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});ctx.closePath();ctx.fill();ctx.stroke();if(en.type==='leviathan'){ctx.beginPath();ctx.arc(0,0,en.size*0.4,0,Math.PI*2);ctx.fillStyle='#ef4444';ctx.fill();}ctx.restore();}});
             if(player.weapons.aura){let w=player.weapons.aura,r=w.baseRadius*globalAreaMult;ctx.fillStyle=w.isEvolved?'rgba(236,72,153,0.15)':'rgba(217,70,239,0.1)';ctx.strokeStyle=w.isEvolved?'rgba(236,72,153,0.4)':'rgba(217,70,239,0.3)';ctx.lineWidth=w.isEvolved?4:2;ctx.beginPath();ctx.arc(canvas.width/2,canvas.height/2,r,0,Math.PI*2);ctx.fill();ctx.stroke();}
             
+            // 👉 修正：補回被誤刪的護衛無人機渲染代碼
+            if(player.weapons.drone){let w=player.weapons.drone, s=w.baseSpeed*globalProjSpeedMult, r=w.baseRadius*globalAreaMult, os=frameCount*s; ctx.fillStyle=w.isEvolved?'#c084fc':'#facc15'; for(let i=0;i<w.count;i++){const pos=getScreenPos(worldX+Math.cos(os+(Math.PI*2/w.count)*i)*r,worldY+Math.sin(os+(Math.PI*2/w.count)*i)*r); ctx.save(); ctx.translate(pos.x,pos.y); ctx.rotate(os+(Math.PI*2/w.count)*i); ctx.beginPath(); if(w.isEvolved){ctx.moveTo(12,0);ctx.lineTo(0,7);ctx.lineTo(-12,0);ctx.lineTo(0,-7);}else{ctx.moveTo(10,0);ctx.lineTo(0,6);ctx.lineTo(-10,0);ctx.lineTo(0,-6);} ctx.closePath(); ctx.fill(); ctx.restore();} if(w.isEvolved){ctx.strokeStyle='rgba(192,132,252,0.2)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(canvas.width/2,canvas.height/2,r,0,Math.PI*2);ctx.stroke();}}
+
             bullets.forEach(b=>{
                 let p=getScreenPos(b.x,b.y);
                 if(p.x < -50 || p.x > canvas.width+50 || p.y < -50 || p.y > canvas.height+50) return; 
@@ -1176,8 +1193,9 @@
             // 🎯 響應式字體與實體玻璃裂痕特效，文字瞬間砸在螢幕上
             let ta = Math.max(0, Math.min(1, (30-deathTimer)/5)); 
             
-            let mainFontSize = Math.max(16, Math.min(28, canvas.width * 0.075)); 
-            let subFontSize = Math.max(10, Math.min(16, canvas.width * 0.04));
+            // 👉 修正：縮小字體極限倍率以防在 iPhone mini 遭到裁切
+            let mainFontSize = Math.max(14, Math.min(32, canvas.width * 0.055)); 
+            let subFontSize = Math.max(9, Math.min(16, canvas.width * 0.035));
 
             // 🕸️ 繪製玻璃裂痕特效 (Glass Cracks)
             if(glassCracks && glassCracks.length > 0) {
@@ -1216,7 +1234,8 @@
 
             // 高頻隨機雜訊變數
             let isGlitch = deathTimer < 25 && Math.random() < 0.4;
-            let gx = isGlitch ? (Math.random()-0.5)*30 : 0; 
+            // 👉 修正：縮小左右雜訊錯位幅度，避免超出螢幕邊界
+            let gx = isGlitch ? (Math.random()-0.5)*10 : 0; 
             let gy = isGlitch ? (Math.random()-0.5)*15 : 0; 
 
             // 多層殘影與描邊加粗的 Helper
