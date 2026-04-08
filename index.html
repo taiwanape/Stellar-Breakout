@@ -23,7 +23,6 @@
         .top-exp-bar { position: absolute; top: 0; left: 0; width: 100%; height: 8px; background: rgba(0,0,0,0.7); z-index: 10; pointer-events: none; border-bottom: 1px solid #1e293b;}
         #exp-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #93c5fd); width: 0%; box-shadow: 0 0 10px #3b82f6; transition: width 0.2s ease-out; }
 
-        /* 左上：裝備欄 */
         .hud-left { position: absolute; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); z-index: 9; display: flex; flex-direction: column; gap: 4px;}
         .inv-row { display: grid; grid-template-columns: repeat(6, 24px); gap: 2px; } 
         .weapon-slot { width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 1px solid #334155; display: flex; justify-content: center; align-items: center; font-size: 14px; position: relative; border-radius: 2px;}
@@ -35,6 +34,7 @@
         /* 中上：計時器 */
         .hud-center { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 9; text-align: center; }
         .time-display { font-size: 32px; color: #fff; text-shadow: 2px 2px 0px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; font-family: monospace; font-weight: bold; letter-spacing: 2px; }
+        .time-display.boss { color: #f87171; text-shadow: 0 0 10px #ef4444; animation: pulse 1.5s infinite; }
         
         /* 右上：數值與暫停 */
         .hud-right { position: absolute; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 9; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
@@ -66,6 +66,7 @@
 
         .blinking-text { font-size: 18px; color: #fca5a5; animation: blink 1.5s infinite; font-weight: bold; text-shadow: 2px 2px 0 #000; margin-top: 40px; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); } 50% { opacity: 0.8; transform: translateX(-50%) scale(1.05); } }
 
         /* 🌟 封面背景圖樣式 */
         .cover-bg {
@@ -333,10 +334,9 @@
 </div>
 
 <script>
-    // 🍏 防放大與全域變數宣告
     document.addEventListener('gesturestart', e => e.preventDefault());
     document.addEventListener('dblclick', e => e.preventDefault(), {passive:false});
-    
+
     const canvas = document.getElementById('gameCanvas'); 
     const ctx = canvas.getContext('2d');
     
@@ -382,7 +382,7 @@
     canvas.addEventListener('touchcancel',handleTE,{passive:false});
     function handleTE(e){e.preventDefault();if(joystickTouchId===null)return;let L=false;for(let i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===joystickTouchId){L=true;break;}}if(L){isTouching=false;joystickOrigin=null;joystickCurrent=null;touchVector={x:0,y:0};joystickTouchId=null;}}
 
-    // 🎵 16-bit 雙軌合成器音效引擎
+    // 🎵 電影級合成器音效引擎
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
     let activeOscillators = 0; 
@@ -444,20 +444,20 @@
         if(!audioCtx) return;
         stopBGM(); stopBossBGM();
         bgmStep = 0;
-        // 緊湊、壓迫感極強的 16-bit Boss 旋律
-        let bassNotes = [40, 40, 42, 40, 45, 40, 42, 40]; 
-        let arpNotes = [300, 450, 600, 450, 800, 600, 450, 600]; 
+        let bassNotes = [35, 35, 38, 35, 30, 35]; 
         bossBgmInterval = setInterval(() => {
             if(gameState !== 'playing' && gameState !== 'dying') return;
-            let bassFreq = bassNotes[bgmStep % bassNotes.length];
-            let arpFreq = arpNotes[bgmStep % arpNotes.length];
+            let freq = bassNotes[bgmStep % bassNotes.length];
             
-            playSynth(bassFreq, 'square', 0.15, 0.1, true); 
+            playSynth(freq, 'sawtooth', 0.3, 0.15, true); 
+            playSynth(freq * 1.01, 'square', 0.3, 0.1, true); 
+            
             if (bgmStep % 2 === 0) {
-                playSynth(arpFreq, 'sawtooth', 0.1, 0.03, false); 
+                playSynth(freq * 8, 'sine', 0.1, 0.03);
+                playSynth(freq * 12, 'triangle', 0.2, 0.02);
             }
             bgmStep++;
-        }, 120); 
+        }, 350); 
     }
     function stopBossBGM() { if(bossBgmInterval) clearInterval(bossBgmInterval); }
 
@@ -632,14 +632,14 @@
         bossSpawned = true;
         spawnLeviathan();
         soundBossEntry(); 
-        setTimeout(() => startBossBGM(), 2000); 
+        setTimeout(() => startBossBGM(), 3000); 
     };
 
     function spawnLeviathan() { 
         enemies=[]; 
         let sr=Math.max(canvas.width,canvas.height)/2+100;
         currentBoss={
-            type:'leviathan', isBoss:true, name:'【機甲魔蛸】',
+            type:'leviathan', isBoss:true, name:'【虛空魔蛸】',
             x:worldX, y:worldY-sr, size:100, speed:player.speed*0.8, 
             hp:200000, maxHp:200000, angle:Math.PI/2, rotSpeed:0, vertices:[],
             actionTimer:0, targetAngle:0, knockbackX:0, knockbackY:0, damageFlash:0, color:'#000', kbResist:0, droneCd:0, dead: false
@@ -650,87 +650,7 @@
         
         if (gameSeconds === 300 && bossSpawned) {
             soundBossEntry();
-            setTimeout(() => startBossBGM(), 2000);
-        }
-    }
-    
-    // 🦑 純 Canvas 動態算法繪製：極簡星際機甲魔蛸 (Logo Style)
-    function drawVoidOctopus(ctx, size, frameCount, isFlash) {
-        let s = size / 100;
-        ctx.scale(s, s);
-        
-        let bodyColor = isFlash ? '#fff' : '#000000'; 
-        let neonOutline = isFlash ? '#fca5a5' : '#0ea5e9'; 
-        let tentacleGlow = isFlash ? '#fff' : '#22d3ee'; 
-        
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        
-        let targetRot = Math.atan2(worldY - currentBoss.y, worldX - currentBoss.x);
-        // Boss 繪製時會將 context 旋轉 -en.angle，所以這裡補償回來面向玩家
-        ctx.rotate(targetRot + Math.PI/2); 
-        
-        // 8 條幾何捲曲觸手
-        for (let i = 0; i < 8; i++) {
-            ctx.save();
-            let angle = (i - 3.5) * 0.35;
-            ctx.rotate(angle);
-            
-            let breathe = Math.sin(frameCount * 0.05 + i) * 15;
-            
-            // 觸手輪廓
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.quadraticCurveTo(-60, 40 + breathe, -100 - breathe, 10);
-            ctx.quadraticCurveTo(-130 - breathe, -20, -110, -40);
-            ctx.quadraticCurveTo(-90, -60, -70, -30);
-            ctx.quadraticCurveTo(-80, 0, -40, 10);
-            ctx.lineTo(0, 0);
-            
-            ctx.fillStyle = bodyColor;
-            ctx.fill();
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = neonOutline;
-            ctx.stroke();
-
-            // 內側發光吸盤 (虛線)
-            ctx.beginPath();
-            ctx.moveTo(-10, 0);
-            ctx.quadraticCurveTo(-55, 30 + breathe, -95 - breathe, 5);
-            ctx.lineWidth = 6;
-            ctx.setLineDash([2, 18]); 
-            ctx.strokeStyle = tentacleGlow;
-            ctx.stroke();
-            
-            ctx.restore();
-        }
-        
-        // 銳利的星際頭部 (Mantle)
-        ctx.beginPath();
-        ctx.moveTo(15, 0);
-        ctx.lineTo(40, -30);
-        ctx.quadraticCurveTo(80, -40, 100, -10);
-        ctx.lineTo(110, 0); 
-        ctx.lineTo(100, 10);
-        ctx.quadraticCurveTo(80, 40, 40, 30);
-        ctx.closePath();
-        
-        ctx.fillStyle = bodyColor;
-        ctx.fill();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = neonOutline;
-        ctx.stroke();
-        
-        // 邪惡的豎瞳幾何眼
-        if(!isFlash) {
-            ctx.fillStyle = '#facc15'; 
-            ctx.shadowBlur = 15; ctx.shadowColor = '#facc15';
-            ctx.beginPath(); ctx.moveTo(60, -15); ctx.lineTo(75, -20); ctx.lineTo(65, -8); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(60, 15); ctx.lineTo(75, 20); ctx.lineTo(65, 8); ctx.fill();
-            ctx.shadowBlur = 0;
-            
-            ctx.fillStyle = neonOutline;
-            ctx.beginPath(); ctx.arc(30, 0, 8 + Math.sin(frameCount*0.1)*3, 0, Math.PI*2); ctx.fill();
+            setTimeout(() => startBossBGM(), 3000);
         }
     }
 
@@ -762,7 +682,7 @@
         for(let ps in player.passives){let l=player.passives[ps].level; if(l<PASSIVE_DB[ps].maxLevel) p.push({n:PASSIVE_DB[ps].name, lv:l+1, i:PASSIVE_DB[ps].icon,d:PASSIVE_DB[ps].desc,t:'強化',cl:'passive',a:()=>{upgradePassive(ps)}});} 
         
         if(p.length===0){
-            p.push({n:'醫療包',i:'🍗',d:'立刻恢復 50 點生命值',t:'物 আশ্রয়',cl:'',a:()=>{player.hp=Math.min(player.maxHp,player.hp+50)}});
+            p.push({n:'醫療包',i:'🍗',d:'立刻恢復 50 點生命值',t:'物資',cl:'',a:()=>{player.hp=Math.min(player.maxHp,player.hp+50)}});
             p.push({n:'小金庫',i:'💰',d:'獲得 25 金幣',t:'物資',cl:'',a:()=>{collectedCoins+=25;safeUpdate('ingame-coin-display',collectedCoins)}});
         } 
         
@@ -840,7 +760,7 @@
         if(frameCount%60===0){ 
             gameSeconds++; safeUpdate('time-display',`${String(Math.floor(gameSeconds/60)).padStart(2,'0')}:${String(gameSeconds%60).padStart(2,'0')}`); 
             if(gameSeconds===60) checkAchievement('survive_1m'); if(gameSeconds===300) checkAchievement('survive_5m'); 
-            if(gameSeconds===300 && !bossSpawned){bossSpawned=true; spawnLeviathan(); soundBossEntry(); setTimeout(()=>startBossBGM(), 2000);} 
+            if(gameSeconds===300 && !bossSpawned){bossSpawned=true; spawnLeviathan(); soundBossEntry(); setTimeout(()=>startBossBGM(), 3000);} 
         }
         
         if(player.passives.regen && frameCount%300===0){ player.hp=Math.min(player.maxHp,player.hp+player.passives.regen.level); addFloatingText(player,"+"+player.passives.regen.level,'#4ade80'); }
@@ -975,9 +895,13 @@
                 }
                 
                 if(Math.hypot(worldX - e.x, worldY - e.y) > respD && !e.isBoss){ 
-                    let a = player.angle + (Math.random() - 0.5) * Math.PI / 2; 
-                    let r = Math.max(cw, ch) / 2 + 100; 
-                    e.x = worldX + Math.cos(a) * r; e.y = worldY + Math.sin(a) * r; 
+                    if(e.type === 'boss_bullet' || e.type === 'boss_ink') {
+                        e.dead = true; 
+                    } else {
+                        let a = player.angle + (Math.random() - 0.5) * Math.PI / 2; 
+                        let r = Math.max(cw, ch) / 2 + 100; 
+                        e.x = worldX + Math.cos(a) * r; e.y = worldY + Math.sin(a) * r; 
+                    }
                 }
 
                 if(e.type === 'leviathan'){
@@ -1089,50 +1013,6 @@
                 if(e.droneCd > 0) e.droneCd--;
             }
 
-            for (let j = bullets.length - 1; j >= 0; j--) {
-                let b = bullets[j];
-                if(b.dead || b.type === 'bomb' || b.type === 'mine') continue;
-                let hr = b.aoe || 15;
-                if(Math.hypot(b.x - e.x, b.y - e.y) < e.size + hr){
-                    let ba = Math.atan2(b.vy, b.vx);
-                    if(b.type === 'plasma'){
-                        if(!b.isEvo){
-                            spawnParticles(b.x, b.y, '#d946ef', 10); let ar = b.aoe;
-                            enemies.forEach(e2 => {
-                                if(!e2.dead && Math.hypot(b.x - e2.x, b.y - e2.y) < ar){
-                                    e2.hp -= b.damage;
-                                    let ea = Math.atan2(e2.y - b.y, e2.x - b.x);
-                                    e2.knockbackX += Math.cos(ea) * 4 * e2.kbResist; e2.knockbackY += Math.sin(ea) * 4 * e2.kbResist;
-                                    e2.damageFlash = 6; soundHit();
-                                }
-                            });
-                            b.dead = true; screenShake = Math.max(screenShake, 5);
-                        } else {
-                            if(frameCount % 10 === 0){
-                                spawnParticles(e.x, e.y, '#d946ef', 2); e.hp -= b.damage;
-                                let ea = Math.atan2(e.y - b.y, e.x - b.x);
-                                e.knockbackX += Math.cos(ea) * 0.5 * e.kbResist; e.knockbackY += Math.sin(ea) * 0.5 * e.kbResist;
-                                e.damageFlash = 8; screenShake = Math.max(screenShake, 2); soundHit();
-                            }
-                        }
-                    }
-                    else if(b.type === 'laser_evo'){ e.hp -= b.damage; e.damageFlash = 8; spawnParticles(e.x, e.y, '#38bdf8', 5); screenShake = Math.max(screenShake, 2); soundHit(); }
-                    else if(b.type === 'blade'){
-                        if(frameCount % 5 === 0){ e.hp -= b.damage; e.damageFlash = 8; e.knockbackX += Math.cos(b.angle) * 3 * e.kbResist; e.knockbackY += Math.sin(b.angle) * 3 * e.kbResist; spawnParticles(e.x, e.y, '#fbbf24', 3); screenShake = Math.max(screenShake, 3); soundHit(); }
-                    } else if(b.type === 'missile' || b.type === 'missile_evo'){
-                        e.hp -= b.damage; e.damageFlash = 6; soundHit();
-                        if(!b.isEvo) b.dead = true;
-                    } else {
-                        e.hp -= b.damage;
-                        let col = b.type === 'blaster' ? '#facc15' : '#38bdf8', kf = b.type === 'blaster' ? 3 : 1;
-                        e.knockbackX += Math.cos(ba) * kf * e.kbResist; e.knockbackY += Math.sin(ba) * kf * e.kbResist;
-                        e.damageFlash = 8; spawnParticles(b.x, b.y, col, 3); 
-                        if(!b.isEvo) b.dead = true; 
-                        screenShake = Math.max(screenShake, 2); soundHit();
-                    }
-                }
-            }
-
             if(e.hp <= 0 && e.type !== 'death'){
                 if(e.type === 'leviathan'){ checkAchievement('survive_5m'); gameOver(true); return; }
                 if(e.type === 'elite' || e.type === 'tank') spawnParticles(e.x, e.y, '#ef4444', 8);
@@ -1148,7 +1028,7 @@
                 else if(e.type === 'tank' || e.type === 'charger'){
                     if(Math.random() < 0.5) gems.push({x:e.x, y:e.y, value:15, type:'red', isMoving:false, speed:0, dead:false});
                     else gems.push({x:e.x, y:e.y, value:5, type:'green', isMoving:false, speed:0, dead:false});
-                } else {
+                } else if(e.type !== 'boss_bullet' && e.type !== 'boss_ink') {
                     if(Math.random() < 0.6){
                         let gv = 1, gt = 'blue';
                         if(Math.random() < 0.15) { gv = 5; gt = 'green'; }
@@ -1156,7 +1036,8 @@
                         gems.push({x:e.x, y:e.y, value:gv, type:gt, isMoving:false, speed:0, dead:false});
                     }
                 }
-                e.dead = true; score++; safeUpdate('score-display', score);
+                e.dead = true; 
+                if(e.type !== 'boss_bullet' && e.type !== 'boss_ink') { score++; safeUpdate('score-display', score); }
             }
         }
 
@@ -1304,100 +1185,51 @@
             enemies.forEach(en=>{
                 let p=getScreenPos(en.x,en.y);
                 if(p.x>-200&&p.x<canvas.width+200&&p.y>-200&&p.y<canvas.height+200){
-                    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(en.angle);
+                    ctx.save();ctx.translate(p.x,p.y);
                     
-                    // 🦑 繪製純 Canvas 極簡星際機甲魔蛸 (Logo Style)
                     if(en.type === 'leviathan'){
-                        ctx.rotate(-en.angle); 
-                        let s = en.size / 100;
-                        ctx.scale(s, s);
-                        
-                        let bodyColor = en.damageFlash > 0 ? '#fff' : '#000000'; 
-                        let neonOutline = en.damageFlash > 0 ? '#fca5a5' : '#0ea5e9'; 
-                        let tentacleGlow = en.damageFlash > 0 ? '#fff' : '#22d3ee'; 
-                        
-                        ctx.lineCap = 'round';
-                        ctx.lineJoin = 'round';
-                        
                         let targetRot = Math.atan2(worldY - en.y, worldX - en.x);
-                        ctx.rotate(targetRot);
                         
-                        // 8 條幾何捲曲觸手
-                        for (let i = 0; i < 8; i++) {
-                            ctx.save();
-                            let angle = (i - 3.5) * 0.35;
-                            ctx.rotate(angle);
-                            
-                            let breathe = Math.sin(frameCount * 0.05 + i) * 15;
-                            
-                            // 觸手輪廓
-                            ctx.beginPath();
-                            ctx.moveTo(0, 0);
-                            ctx.quadraticCurveTo(-60, 40 + breathe, -100 - breathe, 10);
-                            ctx.quadraticCurveTo(-130 - breathe, -20, -110, -40);
-                            ctx.quadraticCurveTo(-90, -60, -70, -30);
-                            ctx.quadraticCurveTo(-80, 0, -40, 10);
-                            ctx.lineTo(0, 0);
-                            
-                            ctx.fillStyle = bodyColor;
-                            ctx.fill();
-                            ctx.lineWidth = 4;
-                            ctx.strokeStyle = neonOutline;
-                            ctx.stroke();
+                        // 🦑 依據指示：將章魚精準旋轉，使得觸手對準玩家 (- Math.PI / 2)
+                        ctx.rotate(targetRot - Math.PI / 2);
+                        
+                        // 🌟 呼吸感膨脹收縮
+                        let breath = Math.sin(frameCount * 0.1);
+                        ctx.scale(1 + breath * 0.05, 1 - breath * 0.05);
 
-                            // 內側發光吸盤 (虛線)
-                            ctx.beginPath();
-                            ctx.moveTo(-10, 0);
-                            ctx.quadraticCurveTo(-55, 30 + breathe, -95 - breathe, 5);
-                            ctx.lineWidth = 6;
-                            ctx.setLineDash([2, 18]); 
-                            ctx.strokeStyle = tentacleGlow;
-                            ctx.stroke();
-                            
-                            ctx.restore();
+                        if (en.damageFlash > 0) {
+                            ctx.shadowBlur = 50;
+                            ctx.shadowColor = '#ffffff';
+                            ctx.fillStyle = '#ffffff';
+                        } else {
+                            ctx.shadowBlur = 30;
+                            ctx.shadowColor = '#d946ef';
+                            ctx.fillStyle = '#ffffff';
                         }
-                        
-                        // 銳利的星際頭部 (Mantle)
-                        ctx.beginPath();
-                        ctx.moveTo(15, 0);
-                        ctx.lineTo(40, -30);
-                        ctx.quadraticCurveTo(80, -40, 100, -10);
-                        ctx.lineTo(110, 0); 
-                        ctx.lineTo(100, 10);
-                        ctx.quadraticCurveTo(80, 40, 40, 30);
-                        ctx.closePath();
-                        
-                        ctx.fillStyle = bodyColor;
-                        ctx.fill();
-                        ctx.lineWidth = 4;
-                        ctx.strokeStyle = neonOutline;
-                        ctx.stroke();
-                        
-                        // 邪惡的豎瞳幾何眼
-                        if(en.damageFlash <= 0) {
-                            ctx.fillStyle = '#facc15'; 
-                            ctx.shadowBlur = 15; ctx.shadowColor = '#facc15';
-                            ctx.beginPath(); ctx.moveTo(60, -15); ctx.lineTo(75, -20); ctx.lineTo(65, -8); ctx.fill();
-                            ctx.beginPath(); ctx.moveTo(60, 15); ctx.lineTo(75, 20); ctx.lineTo(65, 8); ctx.fill();
-                            ctx.shadowBlur = 0;
-                            
-                            ctx.fillStyle = neonOutline;
-                            ctx.beginPath(); ctx.arc(30, 0, 8 + Math.sin(frameCount*0.1)*3, 0, Math.PI*2); ctx.fill();
-                        }
-                        
+
+                        // 🦑 原汁原味完美 Emoji 繪製，無損畫質
+                        ctx.font = (en.size * 2.2) + "px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif";
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.fillText("🦑", 0, 0); 
+                        ctx.shadowBlur = 0;
+
                         // ⚡ 繪製狂暴虛空閃電光束
                         if (en.actionTimer >= 400 && en.actionTimer <= 500) {
                             ctx.save();
-                            ctx.rotate(en.targetAngle - targetRot); 
+                            // 撤銷呼吸縮放並指向正確角度
+                            ctx.scale(1 / (1 + breath * 0.05), 1 / (1 - breath * 0.05));
+                            ctx.rotate(en.targetAngle - targetRot + Math.PI / 2); 
                             let alpha = (en.actionTimer - 400) / 100;
                             ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
                             ctx.lineWidth = 2 + Math.random()*2;
                             ctx.setLineDash([10, 10]);
-                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(3000, 0); ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, 3000); ctx.stroke();
                             ctx.restore();
                         } else if (en.actionTimer > 500 && en.actionTimer <= 530) {
                             ctx.save();
-                            ctx.rotate(en.targetAngle - targetRot);
+                            ctx.scale(1 / (1 + breath * 0.05), 1 / (1 - breath * 0.05));
+                            ctx.rotate(en.targetAngle - targetRot + Math.PI / 2);
                             ctx.globalCompositeOperation = 'screen';
                             
                             ctx.strokeStyle = '#ffffff';
@@ -1409,10 +1241,10 @@
                             
                             ctx.beginPath();
                             ctx.moveTo(0, 0);
-                            let lx = 0;
+                            let ly = 0;
                             for(let i=0; i<30; i++) {
-                                lx += 100;
-                                let ly = (Math.random() - 0.5) * 80;
+                                ly += 100;
+                                let lx = (Math.random() - 0.5) * 80;
                                 ctx.lineTo(lx, ly);
                             }
                             ctx.stroke();
@@ -1424,20 +1256,16 @@
                         }
                         
                     } else if (en.type === 'boss_ink') {
-                        // 💧 黏稠劇毒水滴墨斗
-                        let inkAngle = Math.atan2(en.knockbackY || Math.sin(en.angle), en.knockbackX || Math.cos(en.angle));
-                        ctx.rotate(inkAngle - en.angle);
+                        // 💧 水滴狀噴墨斗 
                         ctx.beginPath();
                         ctx.arc(0, 0, en.size, 0, Math.PI*2);
-                        ctx.arc(-en.size*0.6, en.size*0.5, en.size*0.7, 0, Math.PI*2);
-                        ctx.arc(-en.size*0.8, -en.size*0.3, en.size*0.6, 0, Math.PI*2);
-                        ctx.arc(-en.size*1.5, 0, en.size*0.4, 0, Math.PI*2);
                         ctx.fillStyle = '#000000'; ctx.fill();
-                        ctx.strokeStyle = '#0ea5e9'; ctx.lineWidth = 2; 
-                        ctx.shadowBlur = 10; ctx.shadowColor = '#0ea5e9';
+                        ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 3; 
+                        ctx.shadowBlur = 15; ctx.shadowColor = '#a855f7';
                         ctx.stroke();
                         ctx.shadowBlur = 0;
                     } else {
+                        ctx.rotate(en.angle);
                         if(en.damageFlash>0){ctx.fillStyle='#fff';ctx.strokeStyle='#f87171';}else{ctx.fillStyle=en.color;ctx.strokeStyle=(en.type==='elite'?'#f87171':'#64748b');}
                         ctx.lineWidth=en.type==='elite'?3:2;
                         ctx.beginPath();
@@ -1500,9 +1328,9 @@
             
             let ta = Math.max(0, Math.min(1, (30-deathTimer)/5)); 
             
+            // 🅰️ 死亡字體「完全恢復原狀」：無限制字體縮放，確保呈現最大史詩衝擊力
             let mainFontSize = Math.max(60, Math.min(160, canvas.width * 0.22)); 
-            // 🅰️ 終極修復：大幅調高死亡畫面字幕的字體大小下限
-            let subFontSize = Math.max(28, Math.min(48, canvas.width * 0.08));
+            let subFontSize = Math.max(20, Math.min(48, canvas.width * 0.08));
 
             if(glassCracks && glassCracks.length > 0) {
                 ctx.save();
@@ -1541,6 +1369,7 @@
             let gx = isGlitch ? (Math.random()-0.5)*10 : 0; 
             let gy = isGlitch ? (Math.random()-0.5)*15 : 0; 
 
+            // 移除 maxWidth，讓字體可以自由放大
             let drawTextLayer = (txt, y, fSize, glow, isMain) => {
                 ctx.font = `900 ${fSize}px 'Arial Black', Impact, 'Segoe UI Black', sans-serif`;
                 ctx.fillStyle = `rgba(56,189,248,${ta*0.8})`; ctx.fillText(txt, canvas.width/2+gx-3, y+gy); 
@@ -1590,8 +1419,9 @@
     
     function gameLoop(time) { 
         window.stellarBreakoutLoop = requestAnimationFrame(gameLoop); 
-        if(time - lastTime < 16) return;
-        lastTime = time;
+        let deltaTime = time - lastTime;
+        if(deltaTime < 16) return;
+        lastTime = time - (deltaTime % 16);
         if(gameState === 'playing' || gameState === 'dying') update(); 
         draw(); 
     }
