@@ -31,7 +31,7 @@
         .weapon-slot .lvl-badge { position: absolute; bottom: -2px; right: -2px; background: #0284c7; color: white; font-size: 8px; font-weight: bold; padding: 1px 2px; font-family: monospace; border-top-left-radius: 2px; line-height: 1; z-index: 2;}
         .weapon-slot.evolved { border-color: #facc15; box-shadow: 0 0 5px #facc15; }
         
-        /* 中上：計時器 */
+        /* 中上：計時器 (恢復穩定設定) */
         .hud-center { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 9; text-align: center; }
         .time-display { font-size: 32px; color: #fff; text-shadow: 2px 2px 0px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; font-family: monospace; font-weight: bold; letter-spacing: 2px; }
         .time-display.boss { color: #f87171; text-shadow: 0 0 10px #ef4444; animation: pulse 1.5s infinite; }
@@ -50,7 +50,7 @@
         
         #radiation-warning { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(239,68,68,0) 50%, rgba(239,68,68,0.4) 100%); pointer-events: none; z-index: 8; display: none; justify-content: center; align-items: center; }
 
-        /* === 標題與主選單 === */
+        /* 標題與主選單 */
         .center-layout { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100%; width: 100%; }
         .mega-title { font-size: 52px; color: #facc15; text-shadow: 4px 4px 0 #9f1239; letter-spacing: 2px; font-weight: 900; margin: 0 0 10px 0; line-height: 1.1; }
         .sub-title { font-size: 20px; color: #e2e8f0; letter-spacing: 12px; margin: 0 0 50px 0; text-shadow: 2px 2px 0 #000; }
@@ -63,6 +63,7 @@
         
         .menu-coins-display { position: absolute; bottom: max(20px, env(safe-area-inset-bottom)); left: max(20px, env(safe-area-inset-left)); font-size: 20px; font-weight: bold; color: #facc15; text-shadow: 2px 2px 0 #000; display: flex; align-items: center; gap: 8px;}
         .creator-text { position: absolute; bottom: max(20px, env(safe-area-inset-bottom)); right: max(20px, env(safe-area-inset-right)); color: #64748b; font-size: 14px; font-weight: bold; letter-spacing: 1px;}
+        .version-text { position: absolute; bottom: max(5px, env(safe-area-inset-bottom)); left: max(5px, env(safe-area-inset-left)); color: #475569; font-size: 10px; font-family: monospace; z-index: 100; pointer-events: none;}
 
         .blinking-text { font-size: 18px; color: #fca5a5; animation: blink 1.5s infinite; font-weight: bold; text-shadow: 2px 2px 0 #000; margin-top: 40px; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -74,7 +75,7 @@
             background-size: cover !important;
         }
 
-        /* === 模態視窗共用 === */
+        /* 模態視窗共用 */
         .modal-header { height: calc(60px + env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; padding: env(safe-area-inset-top) max(15px, env(safe-area-inset-right)) 0 max(15px, env(safe-area-inset-left)); background: #000; border-bottom: 2px solid #450a0a; flex-shrink: 0; z-index: 2; }
         .modal-header .title { font-size: 20px; font-weight: bold; color: #facc15; margin: 0; }
         .icon-btn { background: #1e293b; border: 1px solid #475569; color: white; font-size: 16px; padding: 6px 12px; border-radius: 6px; box-shadow: 0 3px 0 #020617; font-weight: bold; cursor: pointer;}
@@ -83,9 +84,9 @@
         .modal-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px max(15px, env(safe-area-inset-right)) 15px max(15px, env(safe-area-inset-left)); z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 15px;}
         .modal-content.no-footer { padding-bottom: max(30px, env(safe-area-inset-bottom)); }
         
-        .modal-footer { padding: 15px max(15px, env(safe-area-inset-right)) max(15px, env(safe-area-inset-bottom)) max(15px, env(safe-area-inset-left)); display: flex; justify-content: center; align-items: center; background: #000; border-top: 2px solid #450a0a; flex-shrink: 0; z-index: 2; }
+        .modal-footer { padding: 15px max(15px, env(safe-area-inset-right)) max(15px, env(safe-area-bottom)) max(15px, env(safe-area-inset-left)); display: flex; justify-content: center; align-items: center; background: #000; border-top: 2px solid #450a0a; flex-shrink: 0; z-index: 2; }
         
-        /* === 選角專屬區塊 === */
+        /* 選角專屬區塊 */
         .char-details-container { background: #000; border: 1px solid #334155; border-radius: 8px; width: 100%; max-width: 500px; display: flex; flex-direction: column; }
         .char-details-top { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #1e293b;}
         .char-sprite-large { font-size: 40px; width: 64px; height: 64px; background: #0f172a; border: 2px solid #facc15; display: flex; justify-content: center; align-items: center; border-radius: 8px; margin-right: 15px; box-shadow: inset 0 0 10px #000; flex-shrink: 0;}
@@ -105,7 +106,7 @@
         .char-slot { background: #0f172a; border: 2px solid #334155; border-radius: 8px; width: 56px; height: 56px; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; }
         .char-slot.selected { border-color: #facc15; background: #450a0a; }
 
-        /* === 🌟 列表卡片 === */
+        /* 🌟 列表卡片 */
         .list-card { background: #111827; border: 1px solid #374151; border-radius: 6px; padding: 12px; width: 100%; max-width: 450px; display: flex; align-items: center; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 12px;}
         .list-card.clickable { cursor: pointer; }
         .list-card.clickable:active { transform: translateY(2px); }
@@ -164,7 +165,8 @@
 <body>
 
 <div id="game-container">
-    <!-- 🌟 專屬封面 Splash Screen -->
+    <div class="version-text">V8.5 究極完美版</div>
+
     <div id="splash-screen" class="overlay center-layout cover-bg" style="z-index: 50; pointer-events: auto;" onclick="enterTitle()">
         <h1 class="mega-title">STELLAR<br>BREAKOUT</h1>
         <h2 class="sub-title">星際突圍</h2>
@@ -172,7 +174,6 @@
         <div class="creator-text">製作人：林小木</div>
     </div>
 
-    <!-- 🎯 遊戲 HUD -->
     <div id="game-ui" class="overlay hidden">
         <div id="achievement-popup">
             <div style="font-size: 20px;">🏆</div>
@@ -202,7 +203,6 @@
         <button id="dash-btn"><span>技能</span><span>準備</span></button>
     </div>
 
-    <!-- 標題主選單 -->
     <div id="title-screen" class="modal hidden center-layout cover-bg">
         <div class="menu-coins-display">🪙 <span id="menu-coins">0</span></div>
         <h1 class="mega-title">STELLAR<br>BREAKOUT</h1>
@@ -215,7 +215,6 @@
         <div class="creator-text">製作人：林小木</div>
     </div>
 
-    <!-- 選角介面 -->
     <div id="char-select-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="backToMainMenu()">BACK</button>
@@ -246,7 +245,6 @@
         </div>
     </div>
 
-    <!-- 地圖選擇介面 -->
     <div id="stage-select-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="goToCharSelect()">BACK</button>
@@ -259,7 +257,6 @@
         </div>
     </div>
 
-    <!-- 圖鑑系統 -->
     <div id="achievements-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="backToMainMenu()">BACK</button>
@@ -269,7 +266,6 @@
         <div class="modal-content no-footer" id="ach-list-container"></div>
     </div>
 
-    <!-- 商店系統 -->
     <div id="shop-menu" class="modal hidden">
         <div class="modal-header">
             <button class="icon-btn" onclick="backToMainMenu()">BACK</button>
@@ -279,7 +275,6 @@
         <div class="modal-content no-footer" id="shop-items-container"></div>
     </div>
 
-    <!-- 🌟 升級彈窗 -->
     <div id="level-up-modal" class="popup-overlay hidden">
         <div class="popup-box">
             <h1 class="popup-title">等級提升</h1>
@@ -287,7 +282,6 @@
         </div>
     </div>
 
-    <!-- 寶箱彈窗 -->
     <div id="chest-modal" class="popup-overlay hidden">
         <div class="popup-box" style="align-items: center; text-align: center;">
             <h1 class="popup-title" style="margin-bottom: 0;">回收物資</h1>
@@ -300,7 +294,6 @@
         </div>
     </div>
 
-    <!-- 暫停彈窗 -->
     <div id="pause-modal" class="popup-overlay hidden">
         <div class="popup-box" style="align-items: center;">
             <h1 class="popup-title" style="color: #fff; margin-bottom: 15px;">已暫停</h1>
@@ -316,7 +309,6 @@
         </div>
     </div>
 
-    <!-- 結束彈窗 -->
     <div id="game-over-modal" class="popup-overlay hidden">
         <div class="popup-box" style="align-items: center;">
             <h1 id="game-over-title" class="popup-title" style="color: #f87171;">遊戲結束</h1>
@@ -336,7 +328,7 @@
 <script>
     document.addEventListener('gesturestart', e => e.preventDefault());
     document.addEventListener('dblclick', e => e.preventDefault(), {passive:false});
-
+    
     const canvas = document.getElementById('gameCanvas'); 
     const ctx = canvas.getContext('2d');
     
@@ -382,7 +374,6 @@
     canvas.addEventListener('touchcancel',handleTE,{passive:false});
     function handleTE(e){e.preventDefault();if(joystickTouchId===null)return;let L=false;for(let i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===joystickTouchId){L=true;break;}}if(L){isTouching=false;joystickOrigin=null;joystickCurrent=null;touchVector={x:0,y:0};joystickTouchId=null;}}
 
-    // 🎵 電影級合成器音效引擎
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
     let activeOscillators = 0; 
@@ -856,6 +847,59 @@
             if(b.life <= 0) b.dead = true;
         }
 
+        // 🎯 核心修復：子彈對敵人的物理碰撞偵測
+        for (let j = bullets.length - 1; j >= 0; j--) {
+            let b = bullets[j];
+            if(b.dead || b.type === 'bomb' || b.type === 'mine') continue;
+            
+            let hr = b.aoe || 15;
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i];
+                if(e.dead) continue;
+                
+                if(Math.hypot(b.x - e.x, b.y - e.y) < e.size + hr){
+                    let ba = Math.atan2(b.vy, b.vx);
+                    if(b.type === 'plasma'){
+                        if(!b.isEvo){
+                            spawnParticles(b.x, b.y, '#d946ef', 10); let ar = b.aoe;
+                            enemies.forEach(e2 => {
+                                if(!e2.dead && Math.hypot(b.x - e2.x, b.y - e2.y) < ar){
+                                    e2.hp -= b.damage;
+                                    let ea = Math.atan2(e2.y - b.y, e2.x - b.x);
+                                    e2.knockbackX += Math.cos(ea) * 4 * e2.kbResist; e2.knockbackY += Math.sin(ea) * 4 * e2.kbResist;
+                                    e2.damageFlash = 6; soundHit();
+                                }
+                            });
+                            b.dead = true; screenShake = Math.max(screenShake, 5);
+                            break; // 擊中後銷毀子彈並跳出內圈
+                        } else {
+                            if(frameCount % 10 === 0){
+                                spawnParticles(e.x, e.y, '#d946ef', 2); e.hp -= b.damage;
+                                let ea = Math.atan2(e.y - b.y, e.x - b.x);
+                                e.knockbackX += Math.cos(ea) * 0.5 * e.kbResist; e.knockbackY += Math.sin(ea) * 0.5 * e.kbResist;
+                                e.damageFlash = 8; screenShake = Math.max(screenShake, 2); soundHit();
+                            }
+                        }
+                    }
+                    else if(b.type === 'laser_evo'){ e.hp -= b.damage; e.damageFlash = 8; spawnParticles(e.x, e.y, '#38bdf8', 5); screenShake = Math.max(screenShake, 2); soundHit(); }
+                    else if(b.type === 'blade'){
+                        if(frameCount % 5 === 0){ e.hp -= b.damage; e.damageFlash = 8; e.knockbackX += Math.cos(b.angle) * 3 * e.kbResist; e.knockbackY += Math.sin(b.angle) * 3 * e.kbResist; spawnParticles(e.x, e.y, '#fbbf24', 3); screenShake = Math.max(screenShake, 3); soundHit(); }
+                    } else if(b.type === 'missile' || b.type === 'missile_evo'){
+                        e.hp -= b.damage; e.damageFlash = 6; soundHit();
+                        if(!b.isEvo) b.dead = true;
+                    } else {
+                        e.hp -= b.damage;
+                        let col = b.type === 'blaster' ? '#facc15' : '#38bdf8', kf = b.type === 'blaster' ? 3 : 1;
+                        e.knockbackX += Math.cos(ba) * kf * e.kbResist; e.knockbackY += Math.sin(ba) * kf * e.kbResist;
+                        e.damageFlash = 8; spawnParticles(b.x, b.y, col, 3); 
+                        if(!b.isEvo) b.dead = true; 
+                        screenShake = Math.max(screenShake, 2); soundHit();
+                    }
+                    if(b.dead) break; 
+                }
+            }
+        }
+
         for (let i = destructibles.length - 1; i >= 0; i--) {
             let d = destructibles[i]; if(d.dead) continue; let isH = false;
             for(let j = bullets.length - 1; j >= 0; j--) { let b = bullets[j]; if(!b.dead && b.type!=='bomb' && b.type!=='mine' && b.type!=='missile' && b.type!=='missile_evo' && Math.hypot(b.x - d.x, b.y - d.y) < d.size + (b.aoe || 15)){ isH = true; if(!b.isEvo && b.type!=='laser_evo' && b.type!=='blade') b.dead = true; } }
@@ -894,8 +938,9 @@
                     }
                 }
                 
+                // 🐛 BUG FIX: 確保拋棄物飛出螢幕後銷毀，防止卡頓
                 if(Math.hypot(worldX - e.x, worldY - e.y) > respD && !e.isBoss){ 
-                    if(e.type === 'boss_bullet' || e.type === 'boss_ink') {
+                    if (e.type === 'boss_bullet' || e.type === 'boss_ink') {
                         e.dead = true; 
                     } else {
                         let a = player.angle + (Math.random() - 0.5) * Math.PI / 2; 
@@ -911,7 +956,7 @@
                         let jumpAngle = player.angle + (Math.random()-0.5)*Math.PI/2;
                         e.x = worldX + Math.cos(jumpAngle)*(Math.max(cw, ch)/2 + 200);
                         e.y = worldY + Math.sin(jumpAngle)*(Math.max(cw, ch)/2 + 200);
-                        spawnParticles(e.x, e.y, '#0ea5e9', 50); 
+                        spawnParticles(e.x, e.y, '#d946ef', 50); 
                         distBoss = Math.hypot(worldX - e.x, worldY - e.y);
                     }
 
@@ -921,13 +966,14 @@
                         e.y += (ey / distBoss) * e.speed; 
                         e.angle = Math.atan2(ey, ex);
                         
+                        // 💧 水滴毒墨攻擊 (修正不再原地卡頓)
                         if (e.actionTimer % 60 === 0) {
                             soundShoot();
                             for(let ink = -2; ink <= 2; ink++) {
                                 let inkAngle = e.angle + ink * 0.2;
                                 enemies.push({
                                     type: 'boss_ink', isBoss: false, x: e.x, y: e.y, size: 16, speed: 6, hp: 1, maxHp: 1, 
-                                    angle: inkAngle, rotSpeed: 0, vertices: [], knockbackX: Math.cos(inkAngle)*6, knockbackY: Math.sin(inkAngle)*6, 
+                                    angle: inkAngle, rotSpeed: 0, vertices: [], knockbackX: 0, knockbackY: 0, 
                                     damageFlash: 0, color: '#000', kbResist: 1, dead: false
                                 });
                             }
@@ -949,10 +995,13 @@
                         e.actionTimer = 0;
                     }
                 } else if (e.type === 'boss_ink') {
-                    e.x += e.knockbackX; e.y += e.knockbackY;
-                    if(frameCount % 3 === 0) spawnParticles(e.x, e.y, '#000000', 2);
+                    // 🐛 BUG FIX: 確保毒墨子彈會往前飛，並減少多餘的粒子產生以確保流暢度
+                    e.x += Math.cos(e.angle) * e.speed + e.knockbackX; 
+                    e.y += Math.sin(e.angle) * e.speed + e.knockbackY;
+                    if(frameCount % 5 === 0) spawnParticles(e.x, e.y, '#9333ea', 1);
                 } else if(e.type === 'boss_bullet'){
-                    e.x += e.knockbackX; e.y += e.knockbackY;
+                    e.x += Math.cos(e.angle) * e.speed + e.knockbackX; 
+                    e.y += Math.sin(e.angle) * e.speed + e.knockbackY;
                 } else {
                     if(e.type === 'charger'){
                         e.actionTimer++;
@@ -984,6 +1033,8 @@
                 if(e.type === 'splitter') dmgPlayer = 15; if(e.type === 'tank') dmgPlayer = 20; if(e.type === 'charger') dmgPlayer = 25;
                 if(e.type === 'elite') dmgPlayer = 30; if(e.type === 'boss_bullet' || e.type === 'boss_ink') dmgPlayer = 40; if(e.type === 'death' || e.type === 'leviathan') dmgPlayer = 9999;
                 dt = Math.max(dt, dmgPlayer);
+                // 🐛 BUG FIX: 防治子彈無限穿透與疊加
+                if (e.type === 'boss_bullet' || e.type === 'boss_ink') e.dead = true;
             }
             
             if(player.weapons.aura){
@@ -1188,12 +1239,14 @@
                     ctx.save();ctx.translate(p.x,p.y);
                     
                     if(en.type === 'leviathan'){
+                        // 🦑 使用指定的 Emoji 渲染 Boss
                         let targetRot = Math.atan2(worldY - en.y, worldX - en.x);
+                        ctx.rotate(-en.angle); 
                         
-                        // 🦑 依據指示：將章魚精準旋轉，使得觸手對準玩家 (- Math.PI / 2)
-                        ctx.rotate(targetRot - Math.PI / 2);
+                        // 依照指示旋轉，確保頭部對齊玩家 (上下反轉的正確方向)
+                        ctx.rotate(targetRot + Math.PI / 2);
                         
-                        // 🌟 呼吸感膨脹收縮
+                        // 柔軟呼吸感 (透過縮放矩陣)
                         let breath = Math.sin(frameCount * 0.1);
                         ctx.scale(1 + breath * 0.05, 1 - breath * 0.05);
 
@@ -1207,7 +1260,7 @@
                             ctx.fillStyle = '#ffffff';
                         }
 
-                        // 🦑 原汁原味完美 Emoji 繪製，無損畫質
+                        // 繪製 Emoji (支援蘋果與各大瀏覽器)
                         ctx.font = (en.size * 2.2) + "px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif";
                         ctx.textAlign = "center";
                         ctx.textBaseline = "middle";
@@ -1219,7 +1272,7 @@
                             ctx.save();
                             // 撤銷呼吸縮放並指向正確角度
                             ctx.scale(1 / (1 + breath * 0.05), 1 / (1 - breath * 0.05));
-                            ctx.rotate(en.targetAngle - targetRot + Math.PI / 2); 
+                            ctx.rotate(en.targetAngle - targetRot - Math.PI / 2); 
                             let alpha = (en.actionTimer - 400) / 100;
                             ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
                             ctx.lineWidth = 2 + Math.random()*2;
@@ -1229,7 +1282,7 @@
                         } else if (en.actionTimer > 500 && en.actionTimer <= 530) {
                             ctx.save();
                             ctx.scale(1 / (1 + breath * 0.05), 1 / (1 - breath * 0.05));
-                            ctx.rotate(en.targetAngle - targetRot + Math.PI / 2);
+                            ctx.rotate(en.targetAngle - targetRot - Math.PI / 2);
                             ctx.globalCompositeOperation = 'screen';
                             
                             ctx.strokeStyle = '#ffffff';
@@ -1256,12 +1309,17 @@
                         }
                         
                     } else if (en.type === 'boss_ink') {
-                        // 💧 水滴狀噴墨斗 
+                        // 💧 黏稠水滴狀噴墨斗 
+                        let inkAngle = Math.atan2(en.knockbackY || Math.sin(en.angle), en.knockbackX || Math.cos(en.angle));
+                        ctx.rotate(inkAngle - en.angle);
                         ctx.beginPath();
                         ctx.arc(0, 0, en.size, 0, Math.PI*2);
+                        ctx.arc(-en.size*0.6, en.size*0.5, en.size*0.7, 0, Math.PI*2);
+                        ctx.arc(-en.size*0.8, -en.size*0.3, en.size*0.6, 0, Math.PI*2);
+                        ctx.arc(-en.size*1.5, 0, en.size*0.4, 0, Math.PI*2);
                         ctx.fillStyle = '#000000'; ctx.fill();
-                        ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 3; 
-                        ctx.shadowBlur = 15; ctx.shadowColor = '#a855f7';
+                        ctx.strokeStyle = '#9333ea'; ctx.lineWidth = 2; 
+                        ctx.shadowBlur = 10; ctx.shadowColor = '#9333ea';
                         ctx.stroke();
                         ctx.shadowBlur = 0;
                     } else {
@@ -1369,7 +1427,6 @@
             let gx = isGlitch ? (Math.random()-0.5)*10 : 0; 
             let gy = isGlitch ? (Math.random()-0.5)*15 : 0; 
 
-            // 移除 maxWidth，讓字體可以自由放大
             let drawTextLayer = (txt, y, fSize, glow, isMain) => {
                 ctx.font = `900 ${fSize}px 'Arial Black', Impact, 'Segoe UI Black', sans-serif`;
                 ctx.fillStyle = `rgba(56,189,248,${ta*0.8})`; ctx.fillText(txt, canvas.width/2+gx-3, y+gy); 
