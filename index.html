@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>星際突圍 V12</title>
+    <title>星際突圍</title>
     <style>
         /* 基礎重置 */
         * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; margin: 0; padding: 0; }
@@ -68,6 +68,7 @@
         .center-layout { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100%; width: 100%; }
         .mega-title { font-size: clamp(40px, 12vw, 80px); color: #facc15; text-shadow: 3px 3px 0 #9f1239; letter-spacing: 4px; font-weight: 900; margin: 0 0 10px 0; line-height: 1.1; }
         .sub-title { font-size: clamp(16px, 5vw, 24px); color: #e2e8f0; letter-spacing: 12px; margin: 0 0 50px 0; font-weight: bold;}
+        
         .main-menu-btns { display: flex; flex-direction: column; width: 85%; max-width: 320px; gap: 16px; }
         .btn-main { padding: 16px; font-size: 18px; color: #fff; border-radius: 8px; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); box-shadow: 0 4px 0 rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); width: 100%; letter-spacing: 4px; transition: filter 0.2s;}
         .btn-main:active { transform: translateY(4px); box-shadow: none; filter: brightness(1.2); }
@@ -77,6 +78,7 @@
         
         .menu-coins-display { position: absolute; top: max(20px, env(safe-area-inset-bottom)); right: max(20px, env(safe-area-inset-left)); font-size: 20px; font-weight: 900; color: #facc15; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 1px solid #ca8a04;}
         
+        /* ⭐️ 製作人標記置中於最下方 */
         .creator-text { position: absolute; bottom: max(30px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); color: rgba(148,163,184,0.6); font-size: 12px; font-family: monospace; letter-spacing: 4px; z-index: 100; pointer-events: none; font-weight: bold; white-space: nowrap; text-shadow: 0 0 10px rgba(56,189,248,0.3); text-transform: uppercase; }
         .version-text { position: absolute; top: max(20px, env(safe-area-inset-top)); left: max(20px, env(safe-area-inset-left)); color: rgba(255,255,255,0.4); font-size: 12px; font-family: monospace; z-index: 100; pointer-events: none; font-weight: bold;}
 
@@ -156,13 +158,9 @@
 </head>
 <body>
 
-<!-- 🎵 BGM Audio Elements -->
-<audio id="bgm-audio" loop src="https://cdn.jsdelivr.net/gh/photonstorm/phaser3-examples@master/public/assets/audio/oedipus_ark_pandora.mp3" crossorigin="anonymous"></audio>
-<audio id="boss-bgm-audio" loop src="https://cdn.jsdelivr.net/gh/photonstorm/phaser3-examples@master/public/assets/audio/Dafunk_-_Hardcore_Power_(We_Believe_In_Supremacy).mp3" crossorigin="anonymous"></audio>
-
 <div id="game-container">
     <div id="splash-screen" class="overlay center-layout cover-bg" style="z-index: 50; pointer-events: auto;" onclick="enterTitle()">
-        <div class="version-text">V12.0 全面覺醒版</div>
+        <div class="version-text">V15.0 程式化合成神曲版</div>
         <h1 class="mega-title">STELLAR<br>BREAKOUT</h1>
         <h2 class="sub-title">星際突圍</h2>
         <div class="blinking-text">點擊螢幕啟動系統</div>
@@ -197,10 +195,11 @@
     </div>
 
     <div id="title-screen" class="modal hidden center-layout cover-bg">
-        <div class="version-text">V12.0 全面覺醒版</div>
+        <div class="version-text">V15.0 程式化合成神曲版</div>
         <div class="menu-coins-display">🪙 <span id="menu-coins">0</span></div>
         <h1 class="mega-title">STELLAR<br>BREAKOUT</h1>
         <h2 class="sub-title">星際突圍</h2>
+        
         <div class="main-menu-btns">
             <button class="btn-main btn-green-main" onclick="goToCharSelect()">開始出擊</button>
             <button class="btn-main btn-blue-main" onclick="goToShop()">科技樹升級</button>
@@ -209,7 +208,7 @@
         <div class="creator-text">Developed by 林小木</div>
     </div>
 
-    <!-- 各種 Modal UI (保持不變) -->
+    <!-- 各種 Modal UI -->
     <div id="char-select-menu" class="modal hidden"><div class="modal-header"><button class="icon-btn" onclick="backToMainMenu()">BACK</button><div class="title">選擇駕駛員</div><div style="font-size: 18px; font-weight: 900; color: #facc15;">🪙 <span id="char-menu-coins">0</span></div></div><div class="modal-content"><div class="char-details-container"><div class="char-details-top"><div class="char-profile"><div class="char-sprite-large" id="char-sprite-display">🧑‍🚀</div><div class="char-info-text"><h2 id="char-name">安東尼奧</h2><div class="char-badges"><div class="char-weapon-info">武裝: <span id="char-weapon" style="color:#facc15;">前鋒機砲</span></div><div class="char-weapon-info">技能: <span id="char-skill" style="color:#38bdf8;">空間摺疊</span></div></div><p id="char-desc">駕駛標準戰機。每 10 級提升 10% 傷害。</p></div></div></div><div class="char-stats-grid" id="char-stats"></div></div><div class="char-grid-bottom" id="char-grid"></div></div><div class="modal-footer"><button class="btn-main btn-green-main" style="width:100%; max-width:400px;" onclick="goToStageSelect()">確認</button></div></div>
     <div id="stage-select-menu" class="modal hidden"><div class="modal-header"><button class="icon-btn" onclick="goToCharSelect()">BACK</button><div class="title">選擇星域</div><div style="width: 64px;"></div></div><div class="modal-content" id="stage-list"></div><div class="modal-footer"><button class="btn-main btn-green-main" style="width:100%; max-width:400px;" onclick="startGame()">部署並空降</button></div></div>
     <div id="achievements-menu" class="modal hidden"><div class="modal-header"><button class="icon-btn" onclick="backToMainMenu()">BACK</button><div class="title">作戰紀錄</div><div style="width: 64px;"></div></div><div class="modal-content no-footer" id="ach-list-container"></div></div>
@@ -255,13 +254,12 @@
     let globalDmgMult=1, globalCdMult=1, globalProjSpeedMult=1, globalAreaMult=1, globalDurationMult=1;
     let glassCracks = [], glassCrackCenter = {x:0, y:0};
 
-    // ⭐️ V12 新系統變數
-    let hitStopFrames = 0; // 幀凍結
+    let hitStopFrames = 0; 
     let comboCount = 0;
     let comboTimer = 0;
     let maxCombo = 0;
     let comboMultiplier = 1.0;
-    const COMBO_TIMEOUT = 180; // 3秒不斷連
+    const COMBO_TIMEOUT = 180; 
 
     let player = { size:16, hp:0, maxHp:0, exp:0, maxExp:5, level:1, speed:4, angle:-Math.PI/2, lastFacingX:0, lastFacingY:-1, damageFlash:0, weapons:{}, passives:{}, skillCd:0, skillTimer:0, isDashing:false, isShielded:false, isTimeStopped:false, invincibleTimer:0, trails:[] };
     const MAP_LIMIT = 4000;
@@ -281,42 +279,143 @@
     canvas.addEventListener('touchend',handleTE,{passive:false}); canvas.addEventListener('touchcancel',handleTE,{passive:false});
     function handleTE(e){e.preventDefault();if(joystickTouchId===null)return;let L=false;for(let i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===joystickTouchId){L=true;break;}}if(L){isTouching=false;joystickOrigin=null;joystickCurrent=null;touchVector={x:0,y:0};joystickTouchId=null;}}
 
-    // === 🎵 V12 音效引擎 ===
+    // === 🎵 0KB 程式化生成音樂引擎 (Procedural Synth BGM & AAA Compressor) ===
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
-    const sfxBuffers = {};
-    let bgmTargetVolume = 0.15;
-    let currentBgmVolume = 0.15;
+    let masterCompressor; 
+    let noiseBuffer; 
+    
+    // ⭐️ 程式化 BGM 系統變數
+    let bgmGainNode;
+    let isBgmPlaying = false;
+    let currentBgmVolume = 0.25;
+    let bgmTargetVolume = 0.25;
     let bgmFadeInterval = null;
+    let nextNoteTime = 0;
+    let currentStep = 0;
+    let schedulerTimerID;
+    let isBossPattern = false;
+
+    function createNoiseBuffer() {
+        let bufferSize = audioCtx.sampleRate * 2; 
+        noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        let output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) { output[i] = Math.random() * 2 - 1; }
+    }
 
     function initAudio() { 
         if(!audioCtx) { 
             audioCtx = new AudioContext(); 
-            const urls = {
-                shoot: 'https://cdn.jsdelivr.net/gh/photonstorm/phaser3-examples@master/public/assets/audio/SoundEffects/blaster.mp3',
-                hit: 'https://cdn.jsdelivr.net/gh/photonstorm/phaser3-examples@master/public/assets/audio/SoundEffects/squit.mp3',
-                gem: 'https://cdn.jsdelivr.net/gh/photonstorm/phaser3-examples@master/public/assets/audio/SoundEffects/pickup.mp3',
-                explosion: 'https://cdn.jsdelivr.net/gh/photonstorm/phaser3-examples@master/public/assets/audio/SoundEffects/explosion.mp3',
-                levelUp: 'https://cdn.jsdelivr.net/gh/photonstorm/phaser3-examples@master/public/assets/audio/spells/cast.mp3',
-                click: 'https://cdn.jsdelivr.net/gh/photonstorm/phaser3-examples@master/public/assets/audio/SoundEffects/p-ping.mp3'
-            };
-            for(let key in urls) {
-                fetch(urls[key])
-                    .then(r => r.arrayBuffer())
-                    .then(b => audioCtx.decodeAudioData(b))
-                    .then(decoded => { sfxBuffers[key] = decoded; })
-                    .catch(e => console.log(e));
-            }
+            createNoiseBuffer();
+            
+            // 主動態壓縮器
+            masterCompressor = audioCtx.createDynamicsCompressor();
+            masterCompressor.threshold.setValueAtTime(-20, audioCtx.currentTime); 
+            masterCompressor.knee.setValueAtTime(20, audioCtx.currentTime);       
+            masterCompressor.ratio.setValueAtTime(12, audioCtx.currentTime);      
+            masterCompressor.attack.setValueAtTime(0.002, audioCtx.currentTime);  
+            masterCompressor.release.setValueAtTime(0.1, audioCtx.currentTime);   
+            
+            let masterGain = audioCtx.createGain();
+            masterGain.gain.value = 1.2;
+
+            masterCompressor.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+            
+            // BGM 專屬音量控制器 (匯入壓縮器)
+            bgmGainNode = audioCtx.createGain();
+            bgmGainNode.gain.value = currentBgmVolume;
+            bgmGainNode.connect(masterCompressor);
         } 
         if(audioCtx.state === 'suspended') audioCtx.resume(); 
-        
-        let bgm = document.getElementById('bgm-audio');
-        let bossBgm = document.getElementById('boss-bgm-audio');
-        if(bgm) { bgm.volume = currentBgmVolume; bgm.play().then(()=>bgm.pause()).catch(()=>{}); }
-        if(bossBgm) { bossBgm.volume = currentBgmVolume; bossBgm.play().then(()=>bossBgm.pause()).catch(()=>{}); }
     }
 
-    // 🎵 動態 BGM 音量控制
+    // 🎵 程式化音效：大鼓 (Kick)
+    function playKick(time) {
+        let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(150, time); osc.frequency.exponentialRampToValueAtTime(10, time + 0.15);
+        gain.gain.setValueAtTime(1.5, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+        osc.connect(gain); gain.connect(bgmGainNode);
+        osc.start(time); osc.stop(time + 0.15);
+    }
+    // 🎵 程式化音效：小鼓 (Snare)
+    function playSnare(time) {
+        let noiseSrc = audioCtx.createBufferSource(); noiseSrc.buffer = noiseBuffer;
+        let filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 1000;
+        let gain = audioCtx.createGain(); gain.gain.setValueAtTime(1, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+        noiseSrc.connect(filter); filter.connect(gain); gain.connect(bgmGainNode);
+        noiseSrc.start(time); noiseSrc.stop(time + 0.2);
+    }
+    // 🎵 程式化音效：Hi-Hat
+    function playHihat(time) {
+        let noiseSrc = audioCtx.createBufferSource(); noiseSrc.buffer = noiseBuffer;
+        let filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 7000;
+        let gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.5, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+        noiseSrc.connect(filter); filter.connect(gain); gain.connect(bgmGainNode);
+        noiseSrc.start(time); noiseSrc.stop(time + 0.05);
+    }
+    // 🎵 程式化音效：Cyberpunk Bass
+    function playBass(time, freq) {
+        let osc = audioCtx.createOscillator(); let filter = audioCtx.createBiquadFilter(); let gain = audioCtx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.value = freq;
+        filter.type = 'lowpass'; filter.frequency.setValueAtTime(2000, time); filter.frequency.exponentialRampToValueAtTime(100, time + 0.2);
+        gain.gain.setValueAtTime(0.8, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+        osc.connect(filter); filter.connect(gain); gain.connect(bgmGainNode);
+        osc.start(time); osc.stop(time + 0.2);
+    }
+    // 🎵 程式化音效：科幻主旋律 (Arpeggio)
+    function playArp(time, freq) {
+        let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+        osc.type = 'square'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.3, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+        osc.connect(gain); gain.connect(bgmGainNode);
+        osc.start(time); osc.stop(time + 0.1);
+    }
+
+    function midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+    // ⭐️ BGM 核心音序器 (用純程式碼編寫樂譜！)
+    function scheduleNote(stepNumber, time) {
+        let bpm = isBossPattern ? 145 : 120; // Boss 戰音樂變快
+        
+        // 鼓組節奏
+        if (stepNumber % 4 === 0) playKick(time);
+        if (stepNumber % 8 === 4) playSnare(time);
+        if (stepNumber % 2 === 0) playHihat(time);
+
+        // 貝斯旋律 (Cyberpunk 低音)
+        const bass1 = [36, 0, 36, 0, 36, 0, 36, 36, 31, 0, 31, 0, 31, 0, 31, 31];
+        const bassBoss = [36, 36, 39, 39, 36, 36, 31, 31, 36, 36, 39, 39, 43, 43, 31, 31];
+        let bNote = isBossPattern ? bassBoss[stepNumber] : bass1[stepNumber];
+        if (bNote) playBass(time, midiToFreq(bNote - 12));
+
+        // 高音科幻琶音
+        if (!isBossPattern) {
+            const arp1 = [60, 63, 67, 72, 60, 63, 67, 72, 55, 58, 62, 67, 55, 58, 62, 67];
+            let aNote = arp1[stepNumber];
+            if (aNote) playArp(time, midiToFreq(aNote));
+        } else {
+            const arpBoss = [72, 75, 79, 84, 72, 75, 79, 84, 84, 79, 75, 72, 67, 72, 75, 79];
+            let aNote = arpBoss[stepNumber];
+            if (aNote) playArp(time, midiToFreq(aNote));
+        }
+    }
+
+    function bgmScheduler() {
+        let scheduleAheadTime = 0.1;
+        let lookahead = 25.0; 
+        let bpm = isBossPattern ? 145 : 120;
+        let secondsPerStep = (60.0 / bpm) / 4; 
+
+        while (nextNoteTime < audioCtx.currentTime + scheduleAheadTime) {
+            scheduleNote(currentStep, nextNoteTime);
+            nextNoteTime += secondsPerStep;
+            currentStep++;
+            if (currentStep >= 16) currentStep = 0;
+        }
+        schedulerTimerID = setTimeout(bgmScheduler, lookahead);
+    }
+
     function fadeBGM(targetVol) {
         bgmTargetVolume = targetVol;
         if(bgmFadeInterval) clearInterval(bgmFadeInterval);
@@ -324,109 +423,105 @@
             let diff = bgmTargetVolume - currentBgmVolume;
             if(Math.abs(diff) < 0.01) { currentBgmVolume = bgmTargetVolume; clearInterval(bgmFadeInterval); } 
             else { currentBgmVolume += diff * 0.1; }
-            let bgm = document.getElementById('bgm-audio');
-            let bossBgm = document.getElementById('boss-bgm-audio');
-            if(bgm && !bgm.paused) bgm.volume = Math.max(0, currentBgmVolume);
-            if(bossBgm && !bossBgm.paused) bossBgm.volume = Math.max(0, currentBgmVolume + (targetVol>0.1 ? 0.05 : 0));
+            if(bgmGainNode) bgmGainNode.gain.value = Math.max(0, currentBgmVolume);
         }, 30);
     }
 
-    function playSynth(freq, type, duration, vol) {
-        if (!audioCtx) return;
-        let osc = audioCtx.createOscillator();
-        let gain = audioCtx.createGain();
-        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
-    }
-
-    function playSFX(key, vol = 0.5, rate = 1.0) {
-        if (!audioCtx || !sfxBuffers[key]) return;
-        try {
-            let src = audioCtx.createBufferSource();
-            src.buffer = sfxBuffers[key];
-            src.playbackRate.value = rate;
-            let gain = audioCtx.createGain();
-            gain.gain.value = vol;
-            src.connect(gain);
-            gain.connect(audioCtx.destination);
-            src.start(0);
-        } catch(e) {}
-    }
-
     function startBGM() {
-        let bgm = document.getElementById('bgm-audio');
-        let bossBgm = document.getElementById('boss-bgm-audio');
-        if(bossBgm) { bossBgm.pause(); bossBgm.currentTime = 0; }
-        if(bgm) { bgm.volume = currentBgmVolume; bgm.currentTime = 0; bgm.play().catch(()=>{}); }
-        fadeBGM(0.15);
+        if(isBgmPlaying) stopBGM();
+        isBgmPlaying = true;
+        isBossPattern = false;
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        nextNoteTime = audioCtx.currentTime + 0.05;
+        currentStep = 0;
+        bgmScheduler();
+        fadeBGM(0.25);
     }
-    function stopBGM() { let bgm = document.getElementById('bgm-audio'); if(bgm) bgm.pause(); }
+
+    function stopBGM() { 
+        isBgmPlaying = false;
+        clearTimeout(schedulerTimerID);
+    }
+
     function startBossBGM() {
-        let bgm = document.getElementById('bgm-audio');
-        let bossBgm = document.getElementById('boss-bgm-audio');
-        if(bgm) bgm.pause();
-        if(bossBgm) { bossBgm.volume = currentBgmVolume + 0.05; bossBgm.currentTime = 0; bossBgm.play().catch(()=>{}); }
-        fadeBGM(0.15);
-    }
-    function stopBossBGM() { let bossBgm = document.getElementById('boss-bgm-audio'); if(bossBgm) bossBgm.pause(); }
-
-    let lastShootTime = 0;
-    let lastEnemyShootTime = 0;
-    let lastHitTime = 0;
-    let lastPlasmaTime = 0;
-    let gemPitch = 1.0;
-    let lastGemFrame = 0;
-
-    // ⭐️ 真實時間冷卻：防止遊戲掉幀或 Hit Stop 導致音效判定失效
-    function soundShoot() {
-        let now = performance.now();
-        if(now - lastShootTime < 40) return;
-        lastShootTime = now;
-        playSFX('shoot', 0.25, 1.0 + Math.random()*0.2);
+        if(!isBgmPlaying) startBGM();
+        isBossPattern = true; // 切換樂譜為激昂模式
+        fadeBGM(0.35); // Boss 音量稍微大一點
     }
     
-    function soundEnemyShoot() {
-        let now = performance.now();
-        if(now - lastEnemyShootTime < 80) return;
-        lastEnemyShootTime = now;
-        playSFX('shoot', 0.15, 0.6 + Math.random()*0.2);
-    }
-    
-    function soundHit(isHeavy = false) {
-        let now = performance.now();
-        if(now - lastHitTime < 30 && !isHeavy) return;
-        lastHitTime = now;
-        playSFX('hit', isHeavy ? 0.4 : 0.25, isHeavy ? 0.6 : (0.8 + Math.random()*0.4));
-    }
-    
-    function soundPlasmaStrike() { 
-        let now = performance.now();
-        if(now - lastPlasmaTime < 100) return; // ⭐️ 防止第二關落雷同時觸發導致音軌崩潰 (吃音主因)
-        lastPlasmaTime = now;
-        playSFX('explosion', 0.7, 0.5); 
+    function stopBossBGM() { 
+        isBossPattern = false;
     }
 
-    function soundEnemyDeath() { 
-        let pitch = Math.min(3.0, 1.0 + (comboCount * 0.05));
-        playSFX('hit', 0.15, pitch); 
+    // ⭐️ 現代特效音 (不破音技術)
+    function playModernSFX(type, vol = 0.5, pitchMult = 1.0) {
+        if (!audioCtx) return;
+        let t = audioCtx.currentTime;
+
+        if (type === 'shoot') {
+            let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+            osc.type = 'square'; osc.frequency.setValueAtTime(800 * pitchMult, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+            gain.gain.setValueAtTime(vol * 0.3, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            osc.connect(gain); gain.connect(masterCompressor);
+            osc.start(t); osc.stop(t + 0.1);
+        }
+        else if (type === 'hit') {
+            let noiseSrc = audioCtx.createBufferSource(); noiseSrc.buffer = noiseBuffer;
+            let filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.setValueAtTime(2000 * pitchMult, t);
+            let gain = audioCtx.createGain(); gain.gain.setValueAtTime(vol * 0.8, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            noiseSrc.connect(filter); filter.connect(gain); gain.connect(masterCompressor);
+            noiseSrc.start(t); noiseSrc.stop(t + 0.1);
+        }
+        else if (type === 'explosion') {
+            let noiseSrc = audioCtx.createBufferSource(); noiseSrc.buffer = noiseBuffer;
+            let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.setValueAtTime(800, t); filter.frequency.exponentialRampToValueAtTime(50, t + 0.5);
+            let gain = audioCtx.createGain(); gain.gain.setValueAtTime(vol * 1.2, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+            noiseSrc.connect(filter); filter.connect(gain); gain.connect(masterCompressor);
+            noiseSrc.start(t); noiseSrc.stop(t + 0.5);
+
+            let subOsc = audioCtx.createOscillator(); subOsc.type = 'sine'; subOsc.frequency.setValueAtTime(80, t); subOsc.frequency.exponentialRampToValueAtTime(20, t + 0.5);
+            let subGain = audioCtx.createGain(); subGain.gain.setValueAtTime(vol * 1.5, t); subGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+            subOsc.connect(subGain); subGain.connect(masterCompressor);
+            subOsc.start(t); subOsc.stop(t + 0.5);
+        }
+        else if (type === 'gem') {
+            let osc = audioCtx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(1200 * pitchMult, t); osc.frequency.exponentialRampToValueAtTime(2000 * pitchMult, t + 0.1);
+            let gain = audioCtx.createGain(); gain.gain.setValueAtTime(vol * 0.4, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+            osc.connect(gain); gain.connect(masterCompressor);
+            osc.start(t); osc.stop(t + 0.2);
+        }
+        else if (type === 'levelup') {
+            [440, 554, 659, 880].forEach((freq, i) => {
+                let osc = audioCtx.createOscillator(); osc.type = 'square'; osc.frequency.setValueAtTime(freq, t + i*0.08);
+                let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.setValueAtTime(2000, t + i*0.08); filter.frequency.exponentialRampToValueAtTime(200, t + i*0.08 + 0.4);
+                let gain = audioCtx.createGain(); gain.gain.setValueAtTime(0, t); gain.gain.setValueAtTime(vol * 0.3, t + i*0.08); gain.gain.exponentialRampToValueAtTime(0.01, t + i*0.08 + 0.4);
+                osc.connect(filter); filter.connect(gain); gain.connect(masterCompressor);
+                osc.start(t + i*0.08); osc.stop(t + i*0.08 + 0.4);
+            });
+        }
+        else if (type === 'click') {
+            let osc = audioCtx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(200, t + 0.05);
+            let gain = audioCtx.createGain(); gain.gain.setValueAtTime(vol * 0.5, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+            osc.connect(gain); gain.connect(masterCompressor);
+            osc.start(t); osc.stop(t + 0.05);
+        }
     }
-    
-    function soundPlayerHit() { playSFX('explosion', 0.4, 1.5); }
-    function soundGem() {
-        if(frameCount - lastGemFrame > 45) gemPitch = 1.0;
-        gemPitch = Math.min(2.5, gemPitch + 0.05 + (comboCount>10 ? 0.02 : 0));
-        lastGemFrame = frameCount;
-        playSFX('gem', 0.3, gemPitch);
-    }
-    function soundClick() { playSFX('click', 0.4); }
-    function soundDash() { playSFX('shoot', 0.3, 0.5); }
-    function soundLevelUp() { playSFX('levelUp', 0.5); }
-    function soundExplosion() { playSFX('explosion', 0.5, 0.7 + Math.random()*0.3); }
-    function soundError() { playSFX('click', 0.4, 0.5); }
-    function soundBossEntry() { playSFX('explosion', 0.8, 0.3); }
+
+    let lastShootTime = 0; let lastEnemyShootTime = 0; let lastHitTime = 0; let lastPlasmaTime = 0; let gemPitch = 1.0; let lastGemFrame = 0;
+
+    function soundShoot() { let now = performance.now(); if(now - lastShootTime < 40) return; lastShootTime = now; playModernSFX('shoot', 0.25, 1.0 + Math.random()*0.2); }
+    function soundEnemyShoot() { let now = performance.now(); if(now - lastEnemyShootTime < 80) return; lastEnemyShootTime = now; playModernSFX('shoot', 0.15, 0.4 + Math.random()*0.2); }
+    function soundHit(isHeavy = false) { let now = performance.now(); if(now - lastHitTime < 30 && !isHeavy) return; lastHitTime = now; playModernSFX('hit', isHeavy ? 0.4 : 0.25, isHeavy ? 0.6 : (0.8 + Math.random()*0.4)); }
+    function soundPlasmaStrike() { let now = performance.now(); if(now - lastPlasmaTime < 100) return; lastPlasmaTime = now; playModernSFX('explosion', 0.7, 0.5); }
+    function soundEnemyDeath() { let pitch = Math.min(3.0, 1.0 + (comboCount * 0.05)); playModernSFX('hit', 0.2, pitch); }
+    function soundPlayerHit() { playModernSFX('explosion', 0.5, 1.5); }
+    function soundGem() { if(frameCount - lastGemFrame > 45) gemPitch = 1.0; gemPitch = Math.min(2.5, gemPitch + 0.05 + (comboCount>10 ? 0.02 : 0)); lastGemFrame = frameCount; playModernSFX('gem', 0.3, gemPitch); }
+    function soundClick() { playModernSFX('click', 0.4); }
+    function soundDash() { playModernSFX('shoot', 0.3, 0.3); }
+    function soundLevelUp() { playModernSFX('levelup', 0.6); }
+    function soundExplosion() { playModernSFX('explosion', 0.6, 0.7 + Math.random()*0.3); }
+    function soundError() { playModernSFX('click', 0.5, 0.5); }
+    function soundBossEntry() { playModernSFX('explosion', 1.0, 0.3); }
 
     // === 遊戲邏輯與資料庫 ===
     let saveData = { coins: 0, upgrades: {}, achievements: [] };
@@ -527,10 +622,10 @@
         gameState='chest'; setHudVisible(false); document.getElementById('chest-modal').classList.remove('hidden'); let b=document.getElementById('chest-box'); b.className='chest-img'; b.innerText='📦'; b.style.pointerEvents='auto'; let crui=document.getElementById('chest-reward-ui'); crui.style.display='none'; crui.classList.add('hidden'); chestRewardItem=null; let gold=100+Math.floor(Math.random()*100), readyEvo=null; for(let id in player.weapons){let w=player.weapons[id];if(w.level>=WEAPON_DB[id].maxLevel&&!w.isEvolved&&player.passives[WEAPON_DB[id].evoReq]){readyEvo=id;break;}} if(readyEvo){let db=WEAPON_DB[readyEvo];chestRewardItem={type:'evo',id:readyEvo,html:`<div class="card-icon-box" style="border:none; background:transparent; font-size:36px;">${db.evoIcon}</div><div class="card-content"><div class="card-title-row"><h3>${db.evoName}</h3><span class="card-tag evo-tag">進化</span></div><p class="card-desc" style="color:#facc15;">突破極限！</p></div>`};gold+=200;}else{let u=[];for(let w in player.weapons)if(player.weapons[w].level<WEAPON_DB[w].maxLevel)u.push({id:w,type:'weapon'});for(let p in player.passives)if(player.passives[p].level<PASSIVE_DB[p].maxLevel)u.push({id:p,type:'passive'});if(u.length>0){let p=u[Math.floor(Math.random()*u.length)],db=p.type==='weapon'?WEAPON_DB[p.id]:PASSIVE_DB[p.id],nl=(p.type==='weapon'?player.weapons[p.id].level:player.passives[p.id].level)+1;chestRewardItem={type:p.type,id:p.id,html:`<div class="card-icon-box" style="border:none; background:transparent; font-size:36px;">${db.icon}</div><div class="card-content"><div class="card-title-row"><h3>${db.name}</h3><span class="card-tag">Lv.${nl}</span></div><p class="card-desc">${db.desc[nl-1]||db.desc}</p></div>`};}else{chestRewardItem={type:'gold',html:`<div class="card-icon-box" style="border:none; background:transparent; font-size:36px;">💰</div><div class="card-content"><div class="card-title-row"><h3 style="color:#facc15;">巨型金幣</h3><span class="card-tag new">財富</span></div><p class="card-desc">獲得大量物資</p></div>`};gold+=500;}} safeUpdate('chest-coins',gold); document.getElementById('chest-item-box').innerHTML=chestRewardItem.html; document.getElementById('chest-item-box').className='list-card'; b.onclick=()=>{soundClick(); b.className='chest-img opening';setTimeout(()=>{b.innerText='✨';soundLevelUp(); spawnParticles(worldX,worldY,'#facc15',100);crui.style.display='flex'; crui.classList.remove('hidden'); collectedCoins+=gold;safeUpdate('ingame-coin-display',collectedCoins);if(chestRewardItem.type==='evo')evolveWeapon(chestRewardItem.id);else if(chestRewardItem.type==='weapon')upgradeWeapon(chestRewardItem.id);else if(chestRewardItem.type==='passive')upgradePassive(chestRewardItem.id);},1500);}; 
     }
     
-    function closeChest() { soundClick(); document.getElementById('chest-modal').classList.add('hidden'); fadeBGM(0.15); 
+    function closeChest() { soundClick(); document.getElementById('chest-modal').classList.add('hidden'); fadeBGM(0.25); 
         if(pendingLevelUps > 0) processNextLevelUp(); else { setHudVisible(true); gameState='playing'; } }
     
-    function processNextLevelUp() { if (pendingLevelUps > 0) { pendingLevelUps--; triggerLevelUpModal(); } else { setHudVisible(true); gameState = 'playing'; fadeBGM(0.15); } }
+    function processNextLevelUp() { if (pendingLevelUps > 0) { pendingLevelUps--; triggerLevelUpModal(); } else { setHudVisible(true); gameState = 'playing'; fadeBGM(0.25); } }
 
     function triggerLevelUpModal() { 
         soundLevelUp(); fadeBGM(0.02); 
@@ -575,7 +670,7 @@
     function triggerSkill() { if(player.skillCd <= 0 && gameState === 'playing') skillRequested = true; }
     function gameOver(v=false) { stopBGM(); stopBossBGM(); if(v){ playSynth(400, 'sine', 0.2, 0.1); setTimeout(()=>playSynth(600, 'sine', 0.4, 0.1), 200); } else { soundError(); } gameState='gameover'; setHudVisible(false); let t=document.getElementById('game-over-title'); if(v){t.innerText='任務完成';t.style.color='#facc15';}else{t.innerText='訊號中斷';t.style.color='#f87171';} safeUpdate('final-level',player.level); safeUpdate('final-score',score); safeUpdate('final-combo',maxCombo); safeUpdate('final-time',`${String(Math.floor(gameSeconds/60)).padStart(2,'0')}:${String(gameSeconds%60).padStart(2,'0')}`); safeUpdate('final-coins',collectedCoins); saveData.coins+=collectedCoins; saveGame(); document.getElementById('game-over-modal').classList.remove('hidden'); }
     function togglePause() { soundClick(); if(gameState==='playing'){ fadeBGM(0.05); gameState='paused'; setHudVisible(false); document.getElementById('pause-modal').classList.remove('hidden');} }
-    function resumeFromPause() { soundClick(); fadeBGM(0.15); gameState='playing'; document.getElementById('pause-modal').classList.add('hidden'); setHudVisible(true); }
+    function resumeFromPause() { soundClick(); fadeBGM(0.25); gameState='playing'; document.getElementById('pause-modal').classList.add('hidden'); setHudVisible(true); }
     function quitToMenu() { soundClick(); stopBGM(); stopBossBGM(); saveData.coins+=collectedCoins; saveGame(); setHudVisible(false); enterTitle(); }
 
     /* 🎯 核心運算迴圈 */
@@ -863,7 +958,7 @@
                         e.angle = Math.atan2(ey, ex);
                         
                         if (e.actionTimer % 60 === 0) {
-                            soundEnemyShoot(); // 魔蛸射擊也套用新音效
+                            soundEnemyShoot(); 
                             for(let ink = -2; ink <= 2; ink++) {
                                 let inkAngle = e.angle + ink * 0.2;
                                 enemies.push({ type: 'boss_ink', isBoss: false, x: e.x, y: e.y, size: 16, speed: 6, hp: 1, maxHp: 1, angle: inkAngle, rotSpeed: 0, vertices: [], knockbackX: 0, knockbackY: 0, damageFlash: 0, color: '#000', kbResist: 1, dead: false });
@@ -890,7 +985,7 @@
                         if(e.type === 'elite' && e.actionTimer > 120 && e.actionTimer < 180) {
                             if(e.actionTimer === 121) e.targetAngle = Math.atan2(worldY - e.y, worldX - e.x);
                             if(e.actionTimer === 179) {
-                                soundEnemyShoot(); // ⭐️ 獨立敵人發射音效
+                                soundEnemyShoot(); 
                                 for(let a=0; a<3; a++) {
                                     let ang = e.targetAngle + (a-1)*0.2;
                                     enemyBullets.push({x: e.x, y: e.y, vx: Math.cos(ang)*4, vy: Math.sin(ang)*4, radius: 8, damage: 20, life: 120});
